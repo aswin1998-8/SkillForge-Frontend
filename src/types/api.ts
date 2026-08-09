@@ -43,6 +43,9 @@ export type Profile = {
   years_of_experience: number | null;
   technical_goal: string;
   target_role: RoleBrief | null;
+  target_role_label: string;
+  known_skills: string[];
+  target_learn_skills: string[];
   onboarding_completed: boolean;
   created_at: string;
   updated_at: string;
@@ -53,6 +56,9 @@ export type ProfileUpdate = {
   years_of_experience?: number | null;
   technical_goal?: string;
   target_role_id?: number | null;
+  target_role_label?: string;
+  known_skills?: string[];
+  target_learn_skills?: string[];
   complete_onboarding?: boolean;
 };
 
@@ -121,10 +127,10 @@ export type DiagnosticAnswer = {
 
 export type DiagnosticResult = {
   strengths: string[];
-  gaps: string[];
+  gaps: Array<string | { skill_slug?: string; severity?: string; notes?: string }>;
   evidence: unknown;
   skill_findings: unknown;
-  recommended_focus: string[];
+  recommended_focus: string | string[];
   created_at: string;
 };
 
@@ -135,19 +141,49 @@ export type DiagnosticAttemptStatus =
   | "COMPLETED"
   | "FAILED";
 
+export type DiagnosticTurn = {
+  id: number;
+  ordering: number;
+  stage: string;
+  skill: Skill | null;
+  difficulty: string;
+  question_type: string;
+  prompt_text: string;
+  question_payload: Record<string, unknown>;
+  answer_text: string;
+  evaluation: Record<string, unknown> | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type DiagnosticAttempt = {
   id: number;
   diagnostic_id: number;
   diagnostic_title: string;
   status: DiagnosticAttemptStatus | string;
+  goal?: string;
+  current_stage?: string;
+  stage_history?: string[];
+  active_turn_id?: number | null;
+  active_turn?: DiagnosticTurn | null;
+  skill_scores?: Record<string, { score: number; breakdown?: Record<string, number> }>;
+  transfer_report?: Array<Record<string, unknown>>;
+  gap_report?: Array<Record<string, unknown>>;
   started_at: string;
   completed_at: string | null;
   answers: DiagnosticAnswer[];
+  turns?: DiagnosticTurn[];
   result: DiagnosticResult | null;
 };
 
 export type SaveAnswersRequest = {
   answers: Array<{ question_id: number; answer_text: string }>;
+};
+
+export type SubmitTurnRequest = {
+  turn_id: number;
+  answer_text: string;
 };
 
 export type GapEvidence = {
@@ -242,6 +278,7 @@ export type ChallengeAttempt = {
   completed_at: string | null;
   submission: Submission | null;
   confidence: ConfidenceRating | null;
+  debrief_session_id?: number | null;
 };
 
 export type ChallengeSubmitRequest = {
@@ -315,13 +352,98 @@ export type DashboardData = {
 };
 
 export type RoadmapStep = {
-  gap: UserSkillGap;
-  suggested_challenges: Challenge[];
+  gap?: UserSkillGap;
+  suggested_challenges?: Challenge[];
+  status?: string;
+  notes?: string[];
+  modality?: string;
+  topic?: string;
+  priority?: number;
+  challenge?: Challenge | null;
+  source?: string;
+  session_id?: number;
+};
+
+export type DiagnosticSessionGoal = "sharpen_current" | "switch_role";
+
+export type DiagnosticSessionStatus =
+  | "PENDING"
+  | "GENERATING"
+  | "AWAITING_ANSWERS"
+  | "SYNTHESIZING"
+  | "COMPLETED"
+  | "FAILED";
+
+export type SessionQuestion = {
+  id: number;
+  block: "A" | "B" | string;
+  stage: string;
+  order: number;
+  competency_area?: string;
+  question_text: string;
+  question_type?: string;
+  metadata?: Record<string, unknown>;
   status: string;
+  answer?: {
+    id: number;
+    answer_text: string;
+    exposure_confirmed?: boolean | null;
+    submitted_at: string;
+  } | null;
+  created_at: string;
+};
+
+export type DiagnosticSynthesis = {
+  strengths?: Array<{ skill_area: string; evidence: string }>;
+  gaps?: Array<{ skill_area: string; block: string; severity: string }>;
+  transferable_skills?: Array<{
+    from_current_role: string;
+    applies_to_target: string;
+  }>;
+  roadmap?: Array<{
+    challenge_modality: string;
+    topic: string;
+    priority: number;
+  }>;
+};
+
+export type DiagnosticSession = {
+  id: number;
+  goal: DiagnosticSessionGoal | string;
+  target_role: string;
+  target_taxonomy_id?: number | null;
+  target_taxonomy_name?: string | null;
+  selected_domains?: Array<{ slug: string; domain_name: string }>;
+  assessment_competencies?: Array<{
+    domain_slug: string;
+    competency_area: string;
+  }>;
+  current_role: string;
+  status: DiagnosticSessionStatus | string;
+  current_block: "A" | "B" | string | null;
+  current_stage: string | null;
+  low_stakes: boolean;
+  synthesis: DiagnosticSynthesis;
+  error: string;
+  questions: SessionQuestion[];
+  current_questions: SessionQuestion[];
+  roadmap_items: Array<{
+    id: number;
+    challenge_modality: string;
+    topic: string;
+    priority: number;
+    challenge: number | null;
+  }>;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
 };
 
 export type RoadmapData = {
+  source?: string;
   steps: RoadmapStep[];
   suggested_challenges: Challenge[];
   focus_skills: string[];
+  annotations?: Record<string, string> | Record<number, string>;
+  synthesis?: DiagnosticSynthesis;
 };

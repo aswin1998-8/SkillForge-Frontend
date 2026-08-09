@@ -166,7 +166,7 @@ export function SettingsPage() {
                     Interface Language
                   </div>
                   <div className="body-sm text-on-surface-variant">
-                    Select the primary language for the ForgeIQ platform.
+                    Select the primary language for the Honed platform.
                   </div>
                 </div>
                 <div className="relative w-full md:w-64">
@@ -311,7 +311,7 @@ export function SettingsPage() {
 
       <footer className="mt-10 border-t border-outline-variant/20 bg-surface-container-lowest py-10">
         <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 body-sm text-on-surface-variant md:flex-row">
-          <div>© 2024 ForgeIQ Systems Inc.</div>
+          <div>© 2024 Honed Systems Inc.</div>
           <div className="flex gap-6">
             <a className="transition-colors hover:text-primary" href="#">
               Privacy

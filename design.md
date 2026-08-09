@@ -1,5 +1,5 @@
 ---
-name: ForgeIQ Technical Interface
+name: Honed Technical Interface
 colors:
   surface: '#0b1326'
   surface-dim: '#0b1326'

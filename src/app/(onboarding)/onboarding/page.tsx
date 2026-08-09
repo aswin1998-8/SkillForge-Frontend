@@ -82,7 +82,7 @@ export default function OnboardingPage() {
                 onClick={finish}
                 disabled={!targetRoleId || isLoading}
               >
-                {isLoading ? "Saving…" : "Enter ForgeIQ"}
+                {isLoading ? "Saving…" : "Enter Honed"}
               </Button>
             )}
           </div>

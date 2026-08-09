@@ -9,6 +9,7 @@ import { ConfidenceForm } from "@/features/challenges/ConfidenceForm";
 function SubmitContent({ challengeId }: { challengeId: number }) {
   const searchParams = useSearchParams();
   const attemptId = Number(searchParams.get("attempt") || 0);
+  const debriefId = Number(searchParams.get("debrief") || 0);
 
   return (
     <div className="mx-auto max-w-xl space-y-6">
@@ -18,8 +19,7 @@ function SubmitContent({ challengeId }: { challengeId: number }) {
           Challenge locked in
         </h1>
         <p className="mt-2 text-sm text-muted">
-          Rate your confidence, then watch Sessions for the debrief when it
-          becomes available.
+          Rate your confidence, then continue into the Socratic debrief.
         </p>
       </div>
 
@@ -30,9 +30,15 @@ function SubmitContent({ challengeId }: { challengeId: number }) {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button asChild>
-          <Link href="/sessions">View sessions</Link>
-        </Button>
+        {debriefId ? (
+          <Button asChild>
+            <Link href={`/debrief/${debriefId}`}>Open debrief</Link>
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link href="/sessions">View sessions</Link>
+          </Button>
+        )}
         <Button asChild variant="secondary">
           <Link href={`/challenges/${challengeId}`}>Back to challenge</Link>
         </Button>

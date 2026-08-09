@@ -1,18 +1,12 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  useGetAttemptQuery,
-  useGetDiagnosticQuery,
-} from "@/services/api/diagnosticApi";
-import {
-  DEMO_QUESTIONS,
-  QuestionForm,
-} from "@/features/diagnostics/QuestionForm";
+import { useGetAttemptQuery, useGetNextTurnMutation } from "@/services/api/diagnosticApi";
+import { AdaptiveQuestionForm } from "@/features/diagnostics/AdaptiveQuestionForm";
 import { ProcessingState } from "@/features/diagnostics/ProcessingState";
 import { ResultView } from "@/features/diagnostics/ResultView";
 import { getApiErrorMessage } from "@/lib/errors";
+import type { DiagnosticAttempt } from "@/types/api";
 
 export default function DiagnosticAttemptPage({
   params,
@@ -20,10 +14,12 @@ export default function DiagnosticAttemptPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const router = useRouter();
-  const isDemo = id === "demo" || Number.isNaN(Number(id));
   const attemptId = Number(id);
+  const invalidId = Number.isNaN(attemptId) || id === "demo";
   const [phase, setPhase] = useState<"form" | "processing" | "result">("form");
+  const [localAttempt, setLocalAttempt] = useState<DiagnosticAttempt | null>(null);
+  const [nextError, setNextError] = useState<string | null>(null);
+  const [fetchNextTurn, { isLoading: loadingNext }] = useGetNextTurnMutation();
 
   const {
     data: attempt,
@@ -31,58 +27,74 @@ export default function DiagnosticAttemptPage({
     isLoading,
     refetch,
   } = useGetAttemptQuery(attemptId, {
-    skip: isDemo,
-    pollingInterval: !isDemo && phase === "processing" ? 2500 : 0,
+    skip: invalidId,
+    pollingInterval: !invalidId && phase === "processing" ? 2500 : 0,
   });
 
-  const { data: diagnostic } = useGetDiagnosticQuery(
-    attempt?.diagnostic_id ?? 0,
-    { skip: isDemo || !attempt?.diagnostic_id },
-  );
+  const current = localAttempt ?? attempt ?? null;
 
   useEffect(() => {
     if (!attempt) return;
-    const status = attempt.status;
-    if (status === "COMPLETED") {
+    setLocalAttempt(attempt);
+    if (attempt.status === "COMPLETED") {
       setPhase("result");
     } else if (
-      status === "SUBMITTED" ||
-      status === "PROCESSING" ||
-      status === "FAILED"
+      attempt.status === "SUBMITTED" ||
+      attempt.status === "PROCESSING"
     ) {
-      setPhase(status === "FAILED" ? "result" : "processing");
+      setPhase("processing");
+    } else if (attempt.status === "FAILED") {
+      setPhase("result");
+    } else {
+      setPhase("form");
     }
   }, [attempt]);
 
-  if (isDemo) {
+  // If attempt is in progress but has no active turn yet, ask the API to generate one.
+  useEffect(() => {
+    if (!current || current.status !== "IN_PROGRESS") return;
+    if (current.active_turn) return;
+    if (loadingNext || nextError) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const next = await fetchNextTurn(current.id).unwrap();
+        if (!cancelled) setLocalAttempt(next);
+      } catch (err) {
+        if (!cancelled) {
+          setNextError(
+            getApiErrorMessage(err, "Could not generate the next AI question."),
+          );
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [current?.id, current?.status, current?.active_turn, fetchNextTurn, loadingNext, nextError]);
+
+  if (invalidId) {
     return (
-      <QuestionForm
-        demo
-        questions={DEMO_QUESTIONS}
-        title="Diagnostic Assessment"
-        competency="Core Competency: RAG Architectures & Vector Similarity"
-        onSubmitted={() => router.push("/roadmap")}
-      />
+      <p className="p-6 text-sm text-error">
+        Invalid diagnostic attempt. Start again from Begin Diagnostic.
+      </p>
     );
   }
 
-  if (isLoading) {
+  if (isLoading && !current) {
     return (
-      <p className="p-6 text-sm text-on-surface-variant">Loading attempt…</p>
+      <p className="p-6 text-sm text-on-surface-variant">
+        Loading your adaptive assessment…
+      </p>
     );
   }
 
-  if (error || !attempt) {
+  if ((error && !current) || !current) {
     return (
       <div className="space-y-4 p-6">
         <p className="text-sm text-error">{getApiErrorMessage(error)}</p>
-        <button
-          type="button"
-          className="rounded-lg bg-primary px-4 py-2 text-sm text-on-primary"
-          onClick={() => router.push("/diagnostic/demo")}
-        >
-          Continue in demo mode
-        </button>
       </div>
     );
   }
@@ -91,21 +103,54 @@ export default function DiagnosticAttemptPage({
     return <ProcessingState />;
   }
 
-  if (phase === "result" || attempt.result) {
-    return <ResultView attempt={attempt} />;
+  if (phase === "result" || current.status === "COMPLETED" || current.result) {
+    return <ResultView attempt={current} />;
+  }
+
+  if (!current.active_turn) {
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 p-6">
+        <span className="material-symbols-outlined animate-spin text-[28px] text-primary">
+          progress_activity
+        </span>
+        <p className="body-sm text-on-surface-variant">
+          {loadingNext
+            ? "Calling AI to generate your next question…"
+            : "Preparing your first question…"}
+        </p>
+        {nextError ? <p className="body-sm text-error">{nextError}</p> : null}
+        <button
+          type="button"
+          className="body-sm text-primary underline-offset-4 hover:underline"
+          onClick={() => {
+            setNextError(null);
+            void (async () => {
+              try {
+                const next = await fetchNextTurn(current.id).unwrap();
+                setLocalAttempt(next);
+              } catch (err) {
+                setNextError(
+                  getApiErrorMessage(err, "Could not generate the next AI question."),
+                );
+              }
+            })();
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
-    <QuestionForm
-      attempt={attempt}
-      questions={diagnostic?.questions?.length ? diagnostic.questions : DEMO_QUESTIONS}
-      competency={
-        diagnostic?.description ||
-        "Core Competency: RAG Architectures & Vector Similarity"
-      }
-      onSubmitted={() => {
-        setPhase("processing");
-        void refetch();
+    <AdaptiveQuestionForm
+      attempt={current}
+      onUpdated={(next) => {
+        setLocalAttempt(next);
+        if (next.status === "COMPLETED") {
+          setPhase("result");
+          void refetch();
+        }
       }}
     />
   );

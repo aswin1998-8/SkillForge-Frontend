@@ -15,7 +15,7 @@ export function BrandLogo({
   return (
     <Image
       src="/logo.png"
-      alt="ForgeIQ"
+      alt="Honed"
       width={size}
       height={size}
       priority={priority}

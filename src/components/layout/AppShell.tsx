@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             href="/dashboard"
             className="headline-sm text-on-surface tracking-tight"
           >
-            ForgeIQ
+            Honed
           </Link>
         </div>
 

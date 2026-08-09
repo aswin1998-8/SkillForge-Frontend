@@ -1,6 +1,6 @@
-# ForgeIQ Frontend
+# Honed Frontend
 
-Next.js App Router client for ForgeIQ.
+Next.js App Router client for Honed.
 
 ## Stack
 
@@ -21,6 +21,10 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000).
 
 Backend must be running at `NEXT_PUBLIC_API_URL` (default `http://127.0.0.1:8000/api/v1`).
+
+## AI integration
+
+AI runs only on the Django backend. See backend `docs/AI_INTEGRATION.md` for provider abstraction, adaptive assessment, evidence, and scoring. Never put `GEMINI_API_KEY` / `CLAUDE_API_KEY` in frontend env files.
 
 ## Auth routing
 

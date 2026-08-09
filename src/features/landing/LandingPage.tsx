@@ -29,7 +29,7 @@ function AssessmentPreview() {
             <div className="h-2.5 w-2.5 rounded-full bg-outline-variant" />
           </div>
           <div className="flex-1 text-center font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-outline">
-            ForgeIQ | Assessment/Terminal.env.ts
+            Honed | Assessment/Terminal.env.ts
           </div>
         </div>
 
@@ -147,7 +147,7 @@ export function LandingPage() {
           <Link href="/" className="flex items-center gap-4">
             <BrandLogo size={28} priority />
             <span className="headline-sm tracking-tight text-on-surface">
-              ForgeIQ
+              Honed
             </span>
           </Link>
           <nav className="hidden items-center gap-6 md:flex">
@@ -230,7 +230,7 @@ export function LandingPage() {
                 <div className="flex items-center gap-2 rounded-full border border-outline-variant/60 bg-surface-container-high px-4 py-2">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
                   <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">
-                    ForgeIQ Platform Beta v2.4
+                    Honed Platform Beta v2.4
                   </span>
                 </div>
 
@@ -431,7 +431,7 @@ export function LandingPage() {
 
       <footer className="border-t border-outline-variant/20 bg-surface-container-lowest py-10">
         <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 body-sm text-on-surface-variant md:flex-row">
-          <div>© {new Date().getFullYear()} ForgeIQ Systems Inc.</div>
+          <div>© {new Date().getFullYear()} Honed Systems Inc.</div>
           <div className="flex gap-6">
             <a href="#" className="transition-colors hover:text-primary">
               Privacy

@@ -14,7 +14,7 @@ export function GoalStep({ goal, onChange }: GoalStepProps) {
       <div>
         <h2 className="text-lg font-semibold">Technical goal</h2>
         <p className="text-sm text-muted">
-          One sharp outcome — not a wishlist. What should ForgeIQ forge toward?
+          One sharp outcome — not a wishlist. What should Honed focus on?
         </p>
       </div>
       <div className="space-y-2">

@@ -40,6 +40,7 @@ type Props = {
   selected: OnboardingGoal | null;
   onSelect: (goal: OnboardingGoal) => void;
   onContinue: () => void;
+  onBack?: () => void;
   isLoading?: boolean;
 };
 
@@ -47,6 +48,7 @@ export function OnboardingObjectiveStep({
   selected,
   onSelect,
   onContinue,
+  onBack,
   isLoading,
 }: Props) {
   return (
@@ -74,7 +76,7 @@ export function OnboardingObjectiveStep({
           What are you trying to achieve?
         </h1>
         <p className="body-lg max-w-xl text-on-surface-variant">
-          Select your primary technical objective to help ForgeIQ calibrate your
+          Select your primary technical objective to help Honed calibrate your
           learning pathways and skill assessments.
         </p>
       </div>
@@ -195,7 +197,18 @@ export function OnboardingObjectiveStep({
         })}
       </div>
 
-      <div className="mt-auto flex items-center justify-end pt-10">
+      <div className="mt-auto flex items-center justify-between gap-3 pt-10">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={!onBack}
+          className="flex items-center gap-2 rounded-lg border border-outline-variant/40 px-5 py-4 body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:pointer-events-none disabled:opacity-0"
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            arrow_back
+          </span>
+          Back
+        </button>
         <button
           type="button"
           disabled={!selected || isLoading}

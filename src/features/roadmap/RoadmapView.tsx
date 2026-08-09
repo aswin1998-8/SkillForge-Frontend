@@ -278,21 +278,41 @@ function RoadmapRoleSwitchView({
     ? [
         {
           id: "api-phase",
-          title: "Your Gap Path",
+          title:
+            data.source === "diagnostic_synthesis"
+              ? "Your Synthesis Path"
+              : "Your Gap Path",
           active: true,
           nodes: data.steps.map((step, i) => {
+            if (step.topic || step.modality) {
+              const challenge = step.challenge;
+              return {
+                id: `synth-${i}`,
+                title: step.topic || `Priority ${step.priority ?? i + 1}`,
+                description: `${step.modality || "THEORY"} modality — early wins lean on proven strengths.`,
+                level:
+                  i === 0 ? "Intermediate" : i === 1 ? "Advanced" : "Beginner",
+                status: (i === 0 ? "active" : "locked") as NodeStatus,
+                criticalGap: i === 0,
+                progress: i === 0 ? 10 : undefined,
+                remaining: i === 0 ? "Est. from diagnostic" : undefined,
+                href: challenge?.id
+                  ? `/challenges/${challenge.id}`
+                  : challengeHref,
+              };
+            }
             const status: NodeStatus =
               step.status === "CLOSED"
                 ? "mastered"
                 : i === 0 || step.status === "IN_PROGRESS"
                   ? "active"
                   : "locked";
-            const firstChallenge = step.suggested_challenges[0];
+            const firstChallenge = step.suggested_challenges?.[0];
             return {
-              id: String(step.gap.id),
-              title: step.gap.skill.name,
+              id: String(step.gap?.id ?? i),
+              title: step.gap?.skill?.name || "Skill gap",
               description:
-                step.gap.skill.description ||
+                step.gap?.skill?.description ||
                 firstChallenge?.title ||
                 "Close this gap with focused practice.",
               level:
@@ -316,17 +336,23 @@ function RoadmapRoleSwitchView({
       }));
 
   const criticalGaps =
-    data?.steps
-      ?.filter((s) => s.status !== "CLOSED")
-      .slice(0, 2)
-      .map((s, i) => ({
-        title: s.gap.skill.name,
-        detail: s.status === "NOT_STARTED" ? "Unknown" : "Concept Only",
-        icon: i === 0 ? "api" : "security",
-      })) ?? [
-      { title: "Agent Reliability", detail: "Concept Only", icon: "api" },
-      { title: "AI Security", detail: "Unknown", icon: "security" },
-    ];
+    data?.source === "diagnostic_synthesis"
+      ? (data.steps || []).slice(0, 2).map((s, i) => ({
+          title: s.topic || "Focus area",
+          detail: s.modality || "THEORY",
+          icon: i === 0 ? "api" : "security",
+        }))
+      : data?.steps
+          ?.filter((s) => s.status !== "CLOSED")
+          .slice(0, 2)
+          .map((s, i) => ({
+            title: s.gap?.skill?.name || "Gap",
+            detail: s.status === "NOT_STARTED" ? "Unknown" : "Concept Only",
+            icon: i === 0 ? "api" : "security",
+          })) ?? [
+          { title: "Agent Reliability", detail: "Concept Only", icon: "api" },
+          { title: "AI Security", detail: "Unknown", icon: "security" },
+        ];
 
   return (
     <div className="flex w-full">

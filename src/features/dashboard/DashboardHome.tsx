@@ -12,14 +12,13 @@ import {
 import { OnboardingTargetStep } from "@/features/onboarding/OnboardingTargetStep";
 import {
   OnboardingMasteryStep,
-  domainLabel,
-  type GrowthScope,
+  domainLabels,
   type TechnicalDomain,
 } from "@/features/onboarding/OnboardingMasteryStep";
 import {
   setFocusDomain,
+  setFocusDomainIds,
   setGrowthPath,
-  setGrowthScopeLabel,
 } from "@/lib/growthPath";
 import { cn } from "@/lib/utils";
 
@@ -46,9 +45,10 @@ export function DashboardHome() {
   const [addingCustom, setAddingCustom] = useState(false);
   const [skills, setSkills] = useState<string[]>([...DEFAULT_SKILLS]);
   const [goal, setGoal] = useState<OnboardingGoal | null>(null);
-  const [growthScope, setGrowthScope] = useState<GrowthScope>("same-scope");
-  const [domain, setDomain] = useState<TechnicalDomain | null>("system-design");
-  const [targetRole, setTargetRole] = useState("AI Engineer");
+  const [domains, setDomains] = useState<TechnicalDomain[]>(["system-design"]);
+  const [targetRole, setTargetRole] = useState("");
+  const [learnSelected, setLearnSelected] = useState<string[]>([]);
+  const [learnOptions, setLearnOptions] = useState<string[]>([]);
   const { data: roles } = useGetRolesQuery();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
@@ -56,6 +56,12 @@ export function DashboardHome() {
 
   function toggleSkill(skill: string) {
     setSelected((prev) =>
+      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+    );
+  }
+
+  function toggleLearnSkill(skill: string) {
+    setLearnSelected((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
     );
   }
@@ -74,6 +80,12 @@ export function DashboardHome() {
     setAddingCustom(false);
   }
 
+  function toggleDomain(id: TechnicalDomain) {
+    setDomains((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    );
+  }
+
   async function continueFromBaseline() {
     try {
       const yearsNum = years === "" ? undefined : Number(years);
@@ -81,6 +93,7 @@ export function DashboardHome() {
         current_role: currentRole || undefined,
         years_of_experience:
           yearsNum != null && !Number.isNaN(yearsNum) ? yearsNum : undefined,
+        known_skills: selected,
       }).unwrap();
     } catch {
       // Demo flow: continue even if API is unavailable
@@ -98,25 +111,29 @@ export function DashboardHome() {
     }
     void updateProfile({
       technical_goal: goalLabel(goal),
+      known_skills: selected,
     });
   }
 
   async function continueFromMastery() {
-    if (!domain) return;
+    if (!domains.length) return;
 
-    const scopeLabel =
-      growthScope === "same-scope"
-        ? "Sharpen what I already do"
-        : "Level up to the next level";
-    const target = currentRole.trim() || "AI Engineer";
+    const target = currentRole.trim() || "your current role";
+    const matched = roles?.find(
+      (r) => r.name.toLowerCase() === target.toLowerCase(),
+    );
+    const focus = domainLabels(domains);
 
     setGrowthPath("current-job");
-    setFocusDomain(domainLabel(domain));
-    setGrowthScopeLabel(scopeLabel);
+    setFocusDomain(focus);
+    setFocusDomainIds(domains);
 
     void updateProfile({
       current_role: currentRole || undefined,
-      technical_goal: `${goalLabel("current-job")} · ${scopeLabel} · ${domainLabel(domain)}`,
+      technical_goal: `${goalLabel("current-job")} · ${focus}`,
+      target_role_label: target,
+      target_role_id: matched?.id ?? null,
+      known_skills: selected,
       complete_onboarding: true,
     });
 
@@ -126,22 +143,26 @@ export function DashboardHome() {
   }
 
   async function startDiagnostic() {
+    const label = targetRole.trim();
     const matched = roles?.find(
-      (r) => r.name.toLowerCase() === targetRole.trim().toLowerCase(),
+      (r) => r.name.toLowerCase() === label.toLowerCase(),
     );
     setGrowthPath(goal === "current-job" ? "current-job" : "new-role");
     try {
       await updateProfile({
         current_role: currentRole || undefined,
         technical_goal: goal ? goalLabel(goal) : undefined,
-        target_role_id: matched?.id ?? undefined,
+        target_role_label: label,
+        target_role_id: matched?.id ?? null,
+        known_skills: selected,
+        target_learn_skills: learnSelected,
         complete_onboarding: true,
       }).unwrap();
     } catch {
       // Demo flow
     }
     const q = new URLSearchParams();
-    if (targetRole.trim()) q.set("target", targetRole.trim());
+    if (label) q.set("target", label);
     router.push(`/diagnostic${q.toString() ? `?${q}` : ""}`);
   }
 
@@ -152,6 +173,7 @@ export function DashboardHome() {
           selected={goal}
           onSelect={setGoal}
           onContinue={continueFromGoal}
+          onBack={() => setStep(1)}
           isLoading={isLoading}
         />
       </div>
@@ -162,11 +184,10 @@ export function DashboardHome() {
     return (
       <div className="min-h-[calc(100vh-64px)] w-full bg-background">
         <OnboardingMasteryStep
-          growthScope={growthScope}
-          onGrowthScopeChange={setGrowthScope}
-          domain={domain}
-          onDomainChange={setDomain}
+          domains={domains}
+          onToggleDomain={toggleDomain}
           onContinue={continueFromMastery}
+          onBack={() => setStep(2)}
         />
       </div>
     );
@@ -179,7 +200,19 @@ export function DashboardHome() {
           currentRole={currentRole}
           targetRole={targetRole}
           onTargetChange={setTargetRole}
+          learnSkills={learnSelected}
+          learnSkillOptions={learnOptions}
+          onToggleLearnSkill={toggleLearnSkill}
+          onAddLearnSkill={(name) => {
+            if (!learnOptions.includes(name)) {
+              setLearnOptions((prev) => [...prev, name]);
+            }
+            setLearnSelected((prev) =>
+              prev.includes(name) ? prev : [...prev, name],
+            );
+          }}
           onStart={startDiagnostic}
+          onBack={() => setStep(2)}
           isLoading={isLoading}
         />
       </div>

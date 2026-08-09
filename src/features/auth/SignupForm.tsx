@@ -97,7 +97,7 @@ export function SignupForm() {
           <BrandLogo size={48} priority />
         </div>
         <h1 className="display-lg text-on-surface !text-[40px] !leading-[48px] sm:!text-[48px] sm:!leading-[56px]">
-          ForgeIQ
+          Honed
         </h1>
         <p className="body-lg mt-2 text-on-surface-variant">
           Build skills. Prove your thinking.

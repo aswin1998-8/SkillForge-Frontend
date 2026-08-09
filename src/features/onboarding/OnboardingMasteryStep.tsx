@@ -1,8 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-
-export type GrowthScope = "same-scope" | "reach-higher";
 
 export type TechnicalDomain =
   | "ai-augmented"
@@ -53,23 +52,28 @@ export function domainLabel(id: TechnicalDomain) {
   return DOMAINS.find((d) => d.id === id)?.title ?? id;
 }
 
+export function domainLabels(ids: TechnicalDomain[]) {
+  return ids.map(domainLabel).join(", ");
+}
+
 type Props = {
-  growthScope: GrowthScope;
-  onGrowthScopeChange: (scope: GrowthScope) => void;
-  domain: TechnicalDomain | null;
-  onDomainChange: (domain: TechnicalDomain) => void;
+  domains: TechnicalDomain[];
+  onToggleDomain: (domain: TechnicalDomain) => void;
   onContinue: () => void;
+  onBack?: () => void;
   isLoading?: boolean;
 };
 
 export function OnboardingMasteryStep({
-  growthScope,
-  onGrowthScopeChange,
-  domain,
-  onDomainChange,
+  domains,
+  onToggleDomain,
   onContinue,
+  onBack,
   isLoading,
 }: Props) {
+  const selected = useMemo(() => new Set(domains), [domains]);
+  const canContinue = domains.length > 0 && !isLoading;
+
   return (
     <div className="relative flex min-h-[calc(100vh-64px)] w-full flex-col bg-background">
       <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-6 pb-28 pt-10">
@@ -79,7 +83,8 @@ export function OnboardingMasteryStep({
               What do you want to master?
             </h1>
             <p className="body-lg max-w-3xl text-on-surface-variant">
-              Define your growth trajectory and core technical focus areas.
+              Choose one or more technical domains. Your diagnostic will cover
+              competencies from these areas.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">
@@ -88,71 +93,24 @@ export function OnboardingMasteryStep({
           </div>
         </header>
 
-        <section className="mb-10">
-          <div className="mb-6 flex flex-col gap-2">
-            <h2 className="headline-sm text-on-surface">Growth Scope</h2>
-            <div
-              className="relative inline-flex w-full rounded-lg bg-surface-container-highest p-1 md:w-auto"
-              role="group"
-            >
-              <button
-                type="button"
-                onClick={() => onGrowthScopeChange("same-scope")}
-                className={cn(
-                  "relative z-10 flex flex-1 flex-col items-center gap-1 rounded-md px-10 py-4 text-center transition-all focus:outline-none md:flex-none md:items-start md:text-left",
-                  growthScope === "same-scope"
-                    ? "border border-outline-variant/30 bg-surface-container-low text-on-surface shadow-sm"
-                    : "text-on-surface-variant hover:bg-surface-variant hover:text-on-surface",
-                )}
-              >
-                <span
-                  className={cn(
-                    "headline-sm",
-                    growthScope === "same-scope" && "text-primary",
-                  )}
-                >
-                  Sharpen what I already do
-                </span>
-                <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wide text-on-surface-variant opacity-80">
-                  Same scope
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onGrowthScopeChange("reach-higher")}
-                className={cn(
-                  "relative flex flex-1 flex-col items-center gap-1 rounded-md px-10 py-4 text-center transition-all focus:outline-none md:flex-none md:items-start md:text-left",
-                  growthScope === "reach-higher"
-                    ? "border border-outline-variant/30 bg-surface-container-low text-on-surface shadow-sm"
-                    : "text-on-surface-variant hover:bg-surface-variant hover:text-on-surface",
-                )}
-              >
-                <span
-                  className={cn(
-                    "headline-sm",
-                    growthScope === "reach-higher" && "text-primary",
-                  )}
-                >
-                  Level up to the next level
-                </span>
-                <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wide opacity-80">
-                  Reach higher
-                </span>
-              </button>
-            </div>
-          </div>
-        </section>
-
         <section className="mb-6 flex-grow">
-          <h2 className="mb-6 headline-sm text-on-surface">Technical Domains</h2>
+          <div className="mb-6 flex items-end justify-between gap-3">
+            <h2 className="headline-sm text-on-surface">Technical Domains</h2>
+            <p className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant">
+              {domains.length
+                ? `${domains.length} selected`
+                : "Select at least one"}
+            </p>
+          </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {DOMAINS.map((item) => {
-              const active = domain === item.id;
+              const active = selected.has(item.id);
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onDomainChange(item.id)}
+                  aria-pressed={active}
+                  onClick={() => onToggleDomain(item.id)}
                   className={cn(
                     "group relative overflow-hidden rounded-lg border p-6 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary",
                     active
@@ -184,7 +142,7 @@ export function OnboardingMasteryStep({
                           : undefined
                       }
                     >
-                      {active ? "check_circle" : "arrow_forward"}
+                      {active ? "check_circle" : "add_circle"}
                     </span>
                   </div>
                   <div className="relative z-10 flex flex-col gap-4">
@@ -239,11 +197,22 @@ export function OnboardingMasteryStep({
       </div>
 
       <div className="sticky bottom-0 z-40 border-t border-outline-variant/30 bg-surface/95 px-6 py-4 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1440px] justify-end">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            disabled={!onBack}
+            className="flex items-center gap-2 rounded-lg border border-outline-variant/40 px-5 py-4 body-sm text-on-surface transition-colors hover:bg-surface-container-high disabled:pointer-events-none disabled:opacity-0"
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              arrow_back
+            </span>
+            Back
+          </button>
           <button
             type="button"
             onClick={onContinue}
-            disabled={!domain || isLoading}
+            disabled={!canContinue}
             className="group flex items-center gap-2 rounded-lg bg-primary px-10 py-4 headline-sm text-on-primary shadow-lg shadow-primary/20 transition-all hover:bg-primary-container disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? "Saving…" : "Continue Process"}

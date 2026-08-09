@@ -4,7 +4,7 @@ import { StoreProvider } from "@/store/StoreProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ForgeIQ",
+  title: "Honed",
   description:
     "Technical mastery platform — diagnostics, gap-driven challenges, structured debriefs.",
   icons: {

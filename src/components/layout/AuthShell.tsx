@@ -20,7 +20,7 @@ export function AuthShell({
         >
           <BrandLogo size={32} priority />
           <span className="font-[family-name:var(--font-geist)] text-lg font-semibold tracking-tight">
-            ForgeIQ
+            Honed
           </span>
         </Link>
         <div className="rounded border border-border-subtle bg-surface-container/90 p-4 backdrop-blur sm:p-6">
