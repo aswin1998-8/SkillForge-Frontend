@@ -29,7 +29,16 @@ function SubmitContent({ challengeId }: { challengeId: number }) {
       )}
 
       <div className="flex flex-wrap gap-2">
-        <Button asChild>
+        {attemptId ? (
+          <Button asChild>
+            <Link
+              href={`/challenges/${challengeId}/debrief?attempt=${attemptId}`}
+            >
+              Continue to debrief
+            </Link>
+          </Button>
+        ) : null}
+        <Button asChild variant="secondary">
           <Link href="/sessions">View sessions</Link>
         </Button>
         <Button asChild variant="secondary">

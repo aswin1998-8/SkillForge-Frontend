@@ -4,9 +4,9 @@ export default function TodayChallengePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Today</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Current challenge</h1>
         <p className="text-sm text-muted">
-          One focused challenge aligned to your open gaps.
+          Your unlocked roadmap challenge — finish it to open the next step.
         </p>
       </div>
       <TodayChallengeCard />

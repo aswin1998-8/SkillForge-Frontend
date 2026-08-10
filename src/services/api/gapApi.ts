@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import type { UserSkillGap } from "@/types/api";
+import type { SkillGapAnalysisData, UserSkillGap } from "@/types/api";
 
 export const gapApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
@@ -7,7 +7,11 @@ export const gapApi = baseApi.injectEndpoints({
       query: () => "/gaps/",
       providesTags: ["Gaps"],
     }),
+    getGapAnalysis: build.query<SkillGapAnalysisData, void>({
+      query: () => "/gaps/analysis/",
+      providesTags: ["Gaps"],
+    }),
   }),
 });
 
-export const { useGetGapsQuery } = gapApi;
+export const { useGetGapsQuery, useGetGapAnalysisQuery } = gapApi;

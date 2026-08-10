@@ -1,16 +1,39 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGetTodayChallengeQuery } from "@/services/api/challengeApi";
+import {
+  useGetTodayChallengeQuery,
+  useTrackEventMutation,
+} from "@/services/api/challengeApi";
+import { useGetSessionsQuery } from "@/services/api/sessionApi";
 import { getApiErrorMessage } from "@/lib/errors";
 
 export function TodayChallengeCard() {
   const { data, isLoading, error } = useGetTodayChallengeQuery();
+  const { data: sessions } = useGetSessionsQuery();
+  const [trackEvent] = useTrackEventMutation();
+  const trackedReturn = useRef(false);
+
+  useEffect(() => {
+    if (trackedReturn.current || !data || !sessions?.length) return;
+    const prior = sessions.some((s) => {
+      const d = new Date(s.created_at);
+      const today = new Date(data.date + "T12:00:00");
+      return d.toDateString() !== today.toDateString();
+    });
+    if (!prior) return;
+    trackedReturn.current = true;
+    void trackEvent({
+      name: "day2_return",
+      properties: { challenge_id: data.challenge.id, date: data.date },
+    });
+  }, [data, sessions, trackEvent]);
 
   if (isLoading) {
-    return <p className="text-sm text-muted">Loading today&apos;s challenge…</p>;
+    return <p className="text-sm text-muted">Loading current challenge…</p>;
   }
 
   if (error) {
@@ -19,7 +42,7 @@ export function TodayChallengeCard() {
 
   if (!data) {
     return (
-      <p className="text-sm text-muted">No challenge assigned for today.</p>
+      <p className="text-sm text-muted">No challenge assigned yet.</p>
     );
   }
 
@@ -29,10 +52,9 @@ export function TodayChallengeCard() {
     <div className="overflow-hidden rounded border border-border-subtle bg-surface-container">
       <div className="border-b border-border-subtle bg-surface-container-lowest px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="accent">Today</Badge>
+          <Badge variant="accent">Current</Badge>
           <Badge>{data.status}</Badge>
           <Badge>{c.modality}</Badge>
-          <span className="text-xs text-muted font-mono">{data.date}</span>
         </div>
       </div>
       <div className="p-5">

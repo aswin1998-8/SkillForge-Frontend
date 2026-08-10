@@ -44,7 +44,6 @@ export function SessionStageForm({ session, questions, onUpdated }: Props) {
   const [runTests, { isLoading: runningTests }] = useRunSessionTestsMutation();
 
   useEffect(() => {
-    setIndex(0);
     const textMap: Record<number, string> = {};
     const choiceMap: Record<number, number | null> = {};
     for (const q of questions) {
@@ -54,6 +53,13 @@ export function SessionStageForm({ session, questions, onUpdated }: Props) {
     setAnswers(textMap);
     setChoices(choiceMap);
     setTestResults([]);
+
+    const resumeAt = questions.findIndex((q) => {
+      if (q.status === "ASKED" || q.status === "REVEALED") return true;
+      if (q.status === "ANSWERED" && OPEN_ENDED.has(q.modality || "")) return true;
+      return false;
+    });
+    setIndex(resumeAt >= 0 ? resumeAt : 0);
   }, [questions]);
 
   const question = questions[index];

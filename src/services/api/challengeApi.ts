@@ -2,6 +2,7 @@ import { baseApi } from "./baseApi";
 import type {
   Challenge,
   ChallengeAttempt,
+  ChallengeDebriefPayload,
   ChallengeSubmitRequest,
   ConfidenceCreateRequest,
   ConfidenceRating,
@@ -45,6 +46,49 @@ export const challengeApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+    getDebrief: build.query<ChallengeDebriefPayload, number>({
+      query: (attemptId) => `/attempts/${attemptId}/debrief/`,
+      providesTags: (_r, _e, attemptId) => [{ type: "Debrief", id: attemptId }],
+    }),
+    submitDebriefChecklist: build.mutation<
+      ChallengeDebriefPayload,
+      { attemptId: number; checklist: Record<string, boolean> }
+    >({
+      query: ({ attemptId, checklist }) => ({
+        url: `/attempts/${attemptId}/debrief/checklist/`,
+        method: "POST",
+        body: { checklist },
+      }),
+      invalidatesTags: (_r, _e, { attemptId }) => [
+        { type: "Debrief", id: attemptId },
+      ],
+    }),
+    completeDebrief: build.mutation<
+      ChallengeDebriefPayload,
+      { attemptId: number; follow_up_answers: Record<string, string> }
+    >({
+      query: ({ attemptId, follow_up_answers }) => ({
+        url: `/attempts/${attemptId}/debrief/complete/`,
+        method: "POST",
+        body: { follow_up_answers },
+      }),
+      invalidatesTags: (_r, _e, { attemptId }) => [
+        { type: "Debrief", id: attemptId },
+        "Sessions",
+        "Roadmap",
+        "Dashboard",
+      ],
+    }),
+    trackEvent: build.mutation<
+      { id: number; name: string; created_at: string },
+      { name: string; properties?: Record<string, unknown> }
+    >({
+      query: (body) => ({
+        url: "/events/",
+        method: "POST",
+        body,
+      }),
+    }),
   }),
 });
 
@@ -53,4 +97,8 @@ export const {
   useGetChallengeQuery,
   useSubmitChallengeMutation,
   useSaveConfidenceMutation,
+  useGetDebriefQuery,
+  useSubmitDebriefChecklistMutation,
+  useCompleteDebriefMutation,
+  useTrackEventMutation,
 } = challengeApi;

@@ -16,36 +16,6 @@ type HistoryEntry = {
   score: string | null;
 };
 
-const DEMO_ENTRIES: HistoryEntry[] = [
-  {
-    id: "demo-1",
-    href: "/diagnostic/demo",
-    dateLabel: "TODAY",
-    isToday: true,
-    title: "Diagnose — RAG Retrieval Failure",
-    focus: "Focus: Retrieval evaluation",
-    score: "78%",
-  },
-  {
-    id: "demo-2",
-    href: "/sessions",
-    dateLabel: "AUG 7",
-    isToday: false,
-    title: "Architect — Agent vs Pipeline",
-    focus: "Focus: Failure handling",
-    score: "82%",
-  },
-  {
-    id: "demo-3",
-    href: "/sessions",
-    dateLabel: "AUG 6",
-    isToday: false,
-    title: "Theory — Vector Search",
-    focus: "Focus: Embedding limitations",
-    score: "74%",
-  },
-];
-
 const VISUAL_CARD_BG =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuA8dRGHCSPqhDgpdE3Karozg47-PgDyHQqgNy-8GtjuzO5YU4esMY2aL46z-qIfIaVgew5RKWdjIW2tmFu132QWcuKpb8yMUiiFds2lj1LDUyts9c6zg_9Bt2nqPNS0xkNbNJRzQJ77GniIjMd4i0AQjhVA2cbPYBbUvu_yuI10X1YcbHmdIlINW-P4rXN-Y93_8zjsc_12p7GVLbAKVLXN5ETbW_bWNTPkelsIHqNt8HhwYpqAmCVt";
 
@@ -101,7 +71,7 @@ export function SessionList() {
 
   const entries = useMemo(() => {
     if (data?.length) return data.map(toEntry);
-    return DEMO_ENTRIES;
+    return [];
   }, [data]);
 
   const avgScore = useMemo(() => {
@@ -137,6 +107,19 @@ export function SessionList() {
 
           {isLoading ? (
             <p className="body-sm text-on-surface-variant">Loading sessions…</p>
+          ) : !entries.length ? (
+            <div className="rounded-lg border border-outline-variant/30 bg-surface-container p-6">
+              <p className="body-sm text-on-surface-variant">
+                No sessions yet. Complete a diagnostic or challenge to build your
+                history.
+              </p>
+              <Link
+                href="/challenges/today"
+                className="mt-4 inline-flex text-primary body-sm hover:underline"
+              >
+                Open today&apos;s challenge
+              </Link>
+            </div>
           ) : (
             <div className="flex flex-col gap-2">
               {entries.map((entry) => (

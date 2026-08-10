@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMeQuery } from "@/services/api/authApi";
-import { useStartDiagnosticSessionMutation } from "@/services/api/diagnosticApi";
+import {
+  useGetActiveDiagnosticSessionQuery,
+  useStartDiagnosticSessionMutation,
+} from "@/services/api/diagnosticApi";
+import { DiagnosticAnalyzingScreen } from "@/features/diagnostics/DiagnosticAnalyzingScreen";
 import { getApiErrorMessage } from "@/lib/errors";
 import {
   getStoredFocusFrameworks,
@@ -15,12 +19,18 @@ type Props = {
   targetProfile?: string;
 };
 
+const LOADING_MIN_MS = 2800;
+
 export function DiagnosticIntro({ targetProfile }: Props) {
   const router = useRouter();
   const { data: user } = useMeQuery();
+  const { data: activePayload, isLoading: loadingActive } =
+    useGetActiveDiagnosticSessionQuery();
   const [startSession] = useStartDiagnosticSessionMutation();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const activeSession = activePayload?.active_session ?? null;
 
   const targetRoleLabel =
     targetProfile ||
@@ -33,10 +43,20 @@ export function DiagnosticIntro({ targetProfile }: Props) {
     resolveGrowthPath(user?.profile?.technical_goal),
   );
 
+  useEffect(() => {
+    if (!activeSession?.id) return;
+    router.replace(`/diagnostic/session/${activeSession.id}`);
+  }, [activeSession?.id, router]);
+
   async function beginDiagnostic() {
     if (starting) return;
+    if (activeSession?.id) {
+      router.push(`/diagnostic/session/${activeSession.id}`);
+      return;
+    }
     setError(null);
     setStarting(true);
+    const startedAt = Date.now();
     try {
       const framework_slugs = getStoredFocusFrameworks();
       if (!framework_slugs.length) {
@@ -51,6 +71,12 @@ export function DiagnosticIntro({ targetProfile }: Props) {
       if (!session?.id) {
         throw new Error("Start did not return a session id.");
       }
+      const elapsed = Date.now() - startedAt;
+      if (elapsed < LOADING_MIN_MS) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, LOADING_MIN_MS - elapsed),
+        );
+      }
       router.push(`/diagnostic/session/${session.id}`);
     } catch (err) {
       setStarting(false);
@@ -62,7 +88,7 @@ export function DiagnosticIntro({ targetProfile }: Props) {
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key !== "Enter" || starting) return;
+      if (e.key !== "Enter" || starting || loadingActive || activeSession) return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
       void beginDiagnostic();
@@ -70,14 +96,18 @@ export function DiagnosticIntro({ targetProfile }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starting, goal]);
+  }, [starting, goal, loadingActive, activeSession]);
+
+  if (loadingActive || activeSession) {
+    return (
+      <p className="p-6 text-sm text-on-surface-variant">
+        {activeSession ? "Resuming your diagnostic…" : "Checking for an in-progress diagnostic…"}
+      </p>
+    );
+  }
 
   if (starting) {
-    return (
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-        <p className="body-md text-on-surface-variant">Starting diagnostic…</p>
-      </div>
-    );
+    return <DiagnosticAnalyzingScreen targetRoleLabel={targetRoleLabel} />;
   }
 
   return (
@@ -105,8 +135,9 @@ export function DiagnosticIntro({ targetProfile }: Props) {
               <span className="italic text-primary">real gaps.</span>
             </h1>
             <p className="body-lg mx-auto max-w-2xl text-on-surface-variant">
-              A rule-based adaptive assessment across your selected frameworks —
-              foundational knowledge through coding and reasoning challenges.
+              {(user?.profile?.diagnostic_difficulty_bump ?? 0) > 0
+                ? `Harder cycle ${user?.profile?.diagnostic_cycle ?? 2} — higher-tier questions and scenarios.`
+                : "A rule-based adaptive assessment across your selected frameworks — foundational knowledge through coding and reasoning challenges."}
             </p>
           </div>
 
@@ -120,7 +151,9 @@ export function DiagnosticIntro({ targetProfile }: Props) {
               className="group relative overflow-hidden rounded-lg bg-primary-container px-10 py-4 headline-sm text-on-primary-container shadow-lg transition-all hover:-translate-y-1 disabled:pointer-events-none disabled:opacity-50"
             >
               <span className="relative flex items-center gap-2">
-                Begin Diagnostic
+                {(user?.profile?.diagnostic_difficulty_bump ?? 0) > 0
+                  ? "Begin harder diagnostic"
+                  : "Begin Diagnostic"}
                 <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">
                   arrow_forward
                 </span>

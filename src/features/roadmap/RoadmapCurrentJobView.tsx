@@ -3,81 +3,123 @@
 import Link from "next/link";
 import { useMeQuery } from "@/services/api/authApi";
 import { useGetProfileQuery } from "@/services/api/profileApi";
+import { useGetRoadmapQuery } from "@/services/api/progressApi";
 import { resolveFocusFrameworkLabels } from "@/lib/growthPath";
 import { cn } from "@/lib/utils";
+import type { RoadmapStep } from "@/types/api";
 
-const PHASE1_CARDS = [
-  {
-    id: "xstate",
-    icon: "memory",
-    iconClass: "text-secondary",
-    title: "State Machines (XState)",
-    progress: 100,
-    barClass: "bg-secondary",
-    statusIcon: "check_circle",
-    statusClass: "opacity-50 group-hover/card:opacity-100 group-hover/card:text-primary",
-  },
-  {
-    id: "render",
-    icon: "speed",
-    iconClass: "text-primary",
-    title: "Render Optimization at Scale",
-    progress: 45,
-    barClass: "bg-primary",
-    statusIcon: "radio_button_checked",
-    statusClass: "text-primary opacity-80 animate-pulse",
-    glow: true,
-  },
-  {
-    id: "mfe",
-    icon: "hub",
-    iconClass: "",
-    title: "Micro-frontends Architecture",
-    progress: 0,
+function normalizeStatus(status?: string) {
+  const s = (status || "not_started").toLowerCase();
+  if (s === "closed" || s === "mastered") return "closed";
+  if (s === "in_progress" || s === "active") return "in_progress";
+  return "not_started";
+}
+
+function statusMeta(status?: string) {
+  const normalized = normalizeStatus(status);
+  if (normalized === "closed") {
+    return {
+      label: "Closed",
+      icon: "check_circle",
+      barClass: "bg-secondary",
+      progress: 100,
+      statusClass: "text-secondary",
+    };
+  }
+  if (normalized === "in_progress") {
+    return {
+      label: "In progress",
+      icon: "radio_button_checked",
+      barClass: "bg-primary",
+      progress: 45,
+      statusClass: "text-primary animate-pulse",
+    };
+  }
+  return {
+    label: "Not started",
+    icon: "radio_button_unchecked",
     barClass: "bg-outline",
-    statusIcon: "radio_button_unchecked",
+    progress: 0,
     statusClass: "text-outline-variant",
-    muted: true,
-  },
-];
+  };
+}
 
-const PHASE2_ITEMS = [
-  "Core Web Vitals Regression Testing Pipeline",
-  "Edge Compute & SSR Caching Strategies",
-];
+function stepHref(step: RoadmapStep, fallback: string) {
+  if (step.challenge?.id) return `/challenges/${step.challenge.id}`;
+  const suggested = step.suggested_challenges?.[0];
+  if (suggested?.id) return `/challenges/${suggested.id}`;
+  return fallback;
+}
 
-const BENCHMARKS = [
-  { label: "System Design", level: 4, color: "bg-secondary", text: "text-secondary" },
-  { label: "Cross-team Impact", level: 3, color: "bg-primary", text: "text-primary" },
-  {
-    label: "Domain Depth (Frontend)",
-    level: 5,
-    color: "bg-tertiary",
-    text: "text-tertiary",
-  },
-];
+function stepTitle(step: RoadmapStep, index: number) {
+  return (
+    step.topic ||
+    step.gap?.skill?.name ||
+    step.challenge?.title ||
+    `Step ${index + 1}`
+  );
+}
+
+function stepSubtitle(step: RoadmapStep) {
+  if (step.challenge?.title) {
+    return step.challenge.title;
+  }
+  if (step.modality) {
+    return "Challenge not linked yet — rematch from diagnostic stack";
+  }
+  return "Diagnostic practice step";
+}
+
+function statusLabel(
+  normalized: string,
+  isActionable: boolean,
+): string {
+  if (normalized === "closed") return "Mastered";
+  if (isActionable) return "Current";
+  return "Upcoming";
+}
 
 export function RoadmapCurrentJobView() {
   const { data: user } = useMeQuery();
   const { data: profile } = useGetProfileQuery();
+  const { data, isLoading, error } = useGetRoadmapQuery();
 
   const roleTitle =
     profile?.current_role ||
     user?.profile?.current_role ||
-    "Senior Frontend Developer";
+    "Engineer";
 
-  const focusDomain = resolveFocusFrameworkLabels(profile?.technical_goal);
-  const focusLine =
-    focusDomain.toLowerCase().includes("performance") ||
-    focusDomain.toLowerCase().includes("reliability")
-      ? "System Architecture & Performance Engineering"
-      : focusDomain.toLowerCase().includes("communication")
-        ? "Technical Communication & Leadership"
-        : focusDomain.toLowerCase().includes("ai")
-          ? "AI-Augmented Engineering"
-          : "System Architecture & Performance Engineering";
+  const targetLabel =
+    profile?.target_role_label ||
+    user?.profile?.target_role_label ||
+    user?.profile?.target_role?.name ||
+    "";
 
-  const mastery = 68;
+  const focusDomain = resolveFocusFrameworkLabels(
+    profile?.technical_goal || user?.profile?.technical_goal,
+  );
+  const steps = data?.steps ?? [];
+  const firstOpenIndex = steps.findIndex(
+    (s) => normalizeStatus(s.status) !== "closed",
+  );
+  const closedCount = steps.filter(
+    (s) => normalizeStatus(s.status) === "closed",
+  ).length;
+  const mastery = steps.length
+    ? Math.round((closedCount / steps.length) * 100)
+    : 0;
+  const fallbackChallenge =
+    data?.suggested_challenges?.[0]?.id != null
+      ? `/challenges/${data.suggested_challenges[0].id}`
+      : "/challenges/today";
+  const activeStep =
+    steps.find((s) => normalizeStatus(s.status) === "in_progress") ||
+    (firstOpenIndex >= 0 ? steps[firstOpenIndex] : undefined) ||
+    steps[0];
+
+  const focusFromSynthesis =
+    data?.focus_skills?.[0] ||
+    (activeStep ? stepTitle(activeStep, 0) : null);
 
   return (
     <div className="relative flex min-h-[calc(100vh-64px)] w-full flex-col overflow-hidden bg-background">
@@ -90,11 +132,13 @@ export function RoadmapCurrentJobView() {
         <div className="flex max-w-3xl flex-col gap-2">
           <div className="mb-1 flex flex-wrap items-center gap-4">
             <span className="rounded-full border border-primary/20 bg-primary/10 px-4 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">
-              Active Growth Plan
+              {data?.source === "diagnostic_synthesis"
+                ? "From your diagnostic"
+                : "Active Growth Plan"}
             </span>
             <span className="flex items-center gap-2 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface-variant">
               <span className="h-2 w-2 animate-pulse rounded-full bg-secondary-fixed" />{" "}
-              Tracking Domain Mastery
+              Sequential unlock
             </span>
           </div>
           <h1 className="display-lg leading-tight tracking-tight text-on-surface !text-[40px] !leading-[48px] sm:!text-[48px] sm:!leading-[56px]">
@@ -103,7 +147,8 @@ export function RoadmapCurrentJobView() {
             <span className="text-primary">{roleTitle}</span>
           </h1>
           <p className="mt-2 headline-sm text-on-surface-variant">
-            Focus: {focusLine}
+            Focus: {focusDomain}
+            {targetLabel ? ` · toward ${targetLabel}` : ""}
           </p>
         </div>
 
@@ -118,245 +163,222 @@ export function RoadmapCurrentJobView() {
               className="absolute left-0 top-0 h-full rounded-full bg-primary transition-all duration-1000 ease-out"
               style={{ width: `${mastery}%` }}
             />
-            <div className="absolute left-0 top-0 h-full w-8 animate-[shimmer_2s_infinite] bg-white/20 blur-sm" />
           </div>
           <div className="mt-1 w-full text-right body-sm text-on-surface-variant">
-            Estimated time to completion:{" "}
-            <span className="font-[family-name:var(--font-jetbrains-mono)] text-on-surface">
-              ~4 months
-            </span>
+            {closedCount} of {steps.length || 0} steps closed
           </div>
         </div>
       </div>
 
+      {mastery >= 100 && steps.length > 0 ? (
+        <div className="relative z-10 border-b border-outline-variant/30 bg-primary/10 px-6 py-4">
+          <p className="mx-auto max-w-[1440px] body-sm text-on-surface">
+            Plan complete — return{" "}
+            <Link href="/dashboard" className="text-primary underline-offset-2 hover:underline">
+              Home
+            </Link>{" "}
+            to unlock a harder diagnostic.
+          </p>
+        </div>
+      ) : null}
+
       <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 py-10 xl:flex-row">
-        <div className="flex flex-1 flex-col gap-10">
-          <div className="group relative border-l border-primary/30 pb-10 pl-10">
+        <div className="flex flex-1 flex-col gap-6">
+          <div className="group relative border-l border-primary/30 pb-4 pl-10">
             <div className="absolute -left-3 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-surface">
               <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             </div>
             <div className="-mt-1 flex flex-col gap-4">
               <div className="flex items-center gap-4">
                 <span className="rounded-md bg-primary/10 px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">
-                  Phase 1
+                  Roadmap
                 </span>
-                <span className="body-sm text-on-surface-variant">In Progress</span>
+                <span className="body-sm text-on-surface-variant">
+                  {isLoading ? "Loading…" : `${steps.length} steps`}
+                </span>
               </div>
-              <h2 className="headline-md text-on-surface">
-                Advanced Frontend Patterns
-              </h2>
-              <p className="mb-4 max-w-2xl body-lg text-on-surface-variant">
-                Deepening structural knowledge. Moving beyond component creation
-                to architecting resilient, scaleable UI layers for enterprise
-                applications.
+              <h2 className="headline-md text-on-surface">Practice path</h2>
+              <p className="mb-2 max-w-2xl body-lg text-on-surface-variant">
+                Built from your diagnostic answers across your selected stack.
+                Every competency stays visible — complete the current challenge
+                to unlock the next one.
               </p>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {PHASE1_CARDS.map((card) => (
-                  <div
-                    key={card.id}
-                    className={cn(
-                      "group/card relative flex cursor-pointer flex-col gap-4 overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container p-4 transition-colors hover:border-primary/50",
-                      card.glow &&
-                        "shadow-[0_0_15px_rgba(173,198,255,0.05)]",
-                      card.muted && "opacity-80 hover:border-outline-variant",
-                    )}
+
+              {error ? (
+                <p className="body-sm text-danger">Could not load roadmap.</p>
+              ) : null}
+
+              {!isLoading && !steps.length ? (
+                <div className="rounded-xl border border-outline-variant/40 bg-surface-container p-6">
+                  <p className="body-sm text-on-surface-variant">
+                    No roadmap steps yet. Complete a diagnostic to generate your
+                    path from your scores — not a generic stub curriculum.
+                  </p>
+                  <Link
+                    href="/diagnostic"
+                    className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 body-sm text-on-primary"
                   >
-                    <div
-                      className={cn(
-                        "absolute right-0 top-0 p-2 transition-all",
-                        card.statusClass,
-                      )}
-                    >
-                      <span className="material-symbols-outlined text-lg">
-                        {card.statusIcon}
-                      </span>
-                    </div>
-                    <div
-                      className={cn(
-                        "flex items-center gap-2 body-lg",
-                        card.muted ? "text-on-surface-variant" : "text-on-surface",
-                      )}
-                    >
-                      <span
+                    Start diagnostic
+                  </Link>
+                </div>
+              ) : null}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {steps.map((step, i) => {
+                  const meta = statusMeta(step.status);
+                  const href = stepHref(step, fallbackChallenge);
+                  const normalized = normalizeStatus(step.status);
+                  const isActionable =
+                    normalized !== "closed" && i === firstOpenIndex;
+                  const cardClass = cn(
+                    "group/card relative flex flex-col gap-4 overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container p-4 transition-colors",
+                    isActionable
+                      ? "border-primary/60 hover:border-primary/80"
+                      : "opacity-90",
+                  );
+                  const body = (
+                    <>
+                      <div
                         className={cn(
-                          "material-symbols-outlined",
-                          card.iconClass,
+                          "absolute right-0 top-0 p-2 transition-all",
+                          meta.statusClass,
                         )}
                       >
-                        {card.icon}
-                      </span>
-                      {card.title}
+                        <span className="material-symbols-outlined text-lg">
+                          {normalized === "closed"
+                            ? "check_circle"
+                            : isActionable
+                              ? "play_circle"
+                              : "schedule"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1 pr-8">
+                        <div className="flex items-center gap-2 body-lg text-on-surface">
+                          <span className="material-symbols-outlined text-primary">
+                            {step.modality === "CODING"
+                              ? "code"
+                              : step.modality === "RESEARCH"
+                                ? "travel_explore"
+                                : "bolt"}
+                          </span>
+                          <span className="capitalize">
+                            {stepTitle(step, i).replaceAll("_", " ")}
+                          </span>
+                        </div>
+                        <p className="body-sm text-on-surface-variant">
+                          {stepSubtitle(step)}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 font-[family-name:var(--font-jetbrains-mono)] text-[11px] uppercase tracking-wider text-on-surface-variant">
+                        <span>{step.modality || "THEORY"}</span>
+                        <span>·</span>
+                        <span>
+                          {statusLabel(normalized, isActionable)}
+                        </span>
+                      </div>
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
+                        <div
+                          className={cn("h-full", meta.barClass)}
+                          style={{
+                            width: `${
+                              normalized === "closed"
+                                ? 100
+                                : isActionable
+                                  ? 45
+                                  : 0
+                            }%`,
+                          }}
+                        />
+                      </div>
+                    </>
+                  );
+                  return isActionable ? (
+                    <Link
+                      key={`${step.topic ?? step.gap?.id ?? i}-${i}`}
+                      href={href}
+                      className={cardClass}
+                    >
+                      {body}
+                    </Link>
+                  ) : (
+                    <div
+                      key={`${step.topic ?? step.gap?.id ?? i}-${i}`}
+                      className={cardClass}
+                    >
+                      {body}
                     </div>
-                    <div className="h-1 w-full overflow-hidden rounded-full bg-surface-container-highest">
-                      <div
-                        className={cn("h-full", card.barClass)}
-                        style={{ width: `${card.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-            </div>
-          </div>
 
-          <div className="relative border-l border-outline-variant/30 pb-10 pl-10 opacity-60 transition-opacity duration-300 hover:opacity-100">
-            <div className="absolute -left-3 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-outline-variant bg-surface" />
-            <div className="-mt-1 flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <span className="rounded-md bg-surface-container-highest px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-outline">
-                  Phase 2
-                </span>
-                <span className="body-sm text-outline-variant">Locked</span>
-              </div>
-              <h2 className="headline-md text-on-surface">
-                System Design & Performance
-              </h2>
-              <p className="max-w-2xl body-lg text-on-surface-variant">
-                Mastering the intersection of frontend delivery and backend
-                infrastructure to minimize latency globally.
-              </p>
-              <div className="mt-2 flex flex-col gap-2">
-                {PHASE2_ITEMS.map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-center gap-4 rounded-lg border border-outline-variant/20 bg-surface-container/50 p-4"
-                  >
-                    <span className="material-symbols-outlined text-outline">
-                      lock
-                    </span>
-                    <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface-variant">
-                      {item}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="relative border-l border-transparent pl-10 opacity-40 transition-opacity duration-300 hover:opacity-100">
-            <div className="absolute -left-3 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-outline-variant/50 bg-surface" />
-            <div className="-mt-1 flex flex-col gap-4">
-              <div className="flex items-center gap-4">
-                <span className="rounded-md bg-surface-container-highest/50 px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-outline/50">
-                  Phase 3
-                </span>
-                <span className="body-sm text-outline-variant">Locked</span>
-              </div>
-              <h2 className="headline-md text-on-surface">
-                Technical Leadership
-              </h2>
-              <p className="max-w-2xl body-lg text-on-surface-variant">
-                Influencing engineering culture and driving broad technical
-                initiatives across multiple teams.
-              </p>
+              {activeStep ? (
+                <Link
+                  href={stepHref(activeStep, fallbackChallenge)}
+                  className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg border border-outline-variant/40 px-4 py-2 body-sm text-primary hover:border-primary/50"
+                >
+                  Open current challenge
+                  <span className="material-symbols-outlined text-sm">
+                    arrow_forward
+                  </span>
+                </Link>
+              ) : null}
             </div>
           </div>
         </div>
 
         <div className="flex w-full shrink-0 flex-col gap-6 xl:w-96">
           <div className="relative flex flex-col gap-4 overflow-hidden rounded-xl border border-outline-variant/30 bg-surface-container-highest p-6 shadow-lg">
-            <span className="material-symbols-outlined pointer-events-none absolute -right-10 -top-10 text-9xl text-surface-container-lowest opacity-20">
-              network_node
-            </span>
             <h3 className="border-b border-outline-variant/20 pb-2 headline-sm text-on-surface">
-              Current Deep Dive
+              Current focus
             </h3>
-            <div className="flex flex-col gap-2">
-              <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-primary">
-                Performance Engineering
-              </span>
+            {activeStep ? (
+              <div className="flex flex-col gap-2">
+                <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-primary">
+                  {activeStep.modality || "Practice"}
+                </span>
+                <p className="body-sm capitalize text-on-surface">
+                  {(focusFromSynthesis || stepTitle(activeStep, 0)).replaceAll(
+                    "_",
+                    " ",
+                  )}
+                </p>
+                <p className="body-sm text-on-surface-variant">
+                  {stepSubtitle(activeStep)}
+                </p>
+                <p className="body-sm text-on-surface-variant">
+                  Complete this challenge to unlock the next roadmap step.
+                </p>
+                <Link
+                  href={stepHref(activeStep, "/challenges/today")}
+                  className="mt-2 rounded-lg bg-primary px-4 py-2 text-center body-sm text-on-primary"
+                >
+                  Continue
+                </Link>
+              </div>
+            ) : (
               <p className="body-sm text-on-surface-variant">
-                Focusing on reducing TTFB and INP metrics across the primary web
-                application suite.
+                Complete a diagnostic to unlock focus areas.
               </p>
-            </div>
-            <div className="mt-4 rounded-lg border border-outline-variant/20 bg-surface p-4 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface-variant">
-              <div className="mb-2 flex justify-between">
-                <span>INP (p75)</span>{" "}
-                <span className="text-error">240ms</span>
-              </div>
-              <div className="mb-4 h-1 w-full rounded-full bg-surface-container-highest">
-                <div className="h-full bg-error" style={{ width: "80%" }} />
-              </div>
-              <div className="flex justify-between">
-                <span>Target</span>{" "}
-                <span className="text-[#10B981]">&lt;100ms</span>
-              </div>
-            </div>
+            )}
           </div>
 
-          <div className="flex flex-col gap-4 rounded-xl border border-outline-variant/30 bg-surface-container p-6">
-            <h3 className="border-b border-outline-variant/20 pb-2 headline-sm text-on-surface">
-              Mastery Benchmarks
-            </h3>
-            <p className="mb-2 body-sm text-on-surface-variant">
-              Current assessment against Staff/Principal level expectations in
-              your domain.
-            </p>
-            <div className="flex flex-col gap-6">
-              {BENCHMARKS.map((b) => (
-                <div key={b.label} className="flex flex-col gap-1">
-                  <div
-                    className={cn(
-                      "flex justify-between font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium text-on-surface",
-                    )}
+          {(data?.focus_skills || []).length > 0 ? (
+            <div className="rounded-xl border border-outline-variant/30 bg-surface-container p-5">
+              <h3 className="headline-sm text-on-surface">Gap topics</h3>
+              <ul className="mt-3 space-y-2">
+                {(data?.focus_skills || []).map((skill) => (
+                  <li
+                    key={skill}
+                    className="body-sm capitalize text-on-surface-variant"
                   >
-                    <span>{b.label}</span>
-                    <span className={b.text}>Level {b.level}/5</span>
-                  </div>
-                  <div className="flex h-2 gap-1">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "flex-1 rounded-sm",
-                          i < b.level
-                            ? b.color
-                            : "border border-outline-variant/20 bg-surface-container-highest",
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    {skill.replaceAll("_", " ")}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          <Link
-            href="/settings"
-            className="mt-auto flex w-full items-center justify-center gap-2 rounded-lg border border-outline-variant/50 bg-inverse-on-surface py-4 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-on-surface transition-colors hover:bg-surface-bright"
-          >
-            <span className="material-symbols-outlined text-sm">
-              edit_document
-            </span>
-            Update Plan Context
-          </Link>
+          ) : null}
         </div>
       </div>
-
-      <footer className="mt-10 border-t border-outline-variant/20 bg-surface-container-lowest py-10">
-        <div className="mx-auto flex max-w-[1440px] flex-col items-center justify-between gap-4 px-6 body-sm text-on-surface-variant md:flex-row">
-          <div>© 2024 Honed Systems Inc.</div>
-          <div className="flex gap-6">
-            <a className="transition-colors hover:text-primary" href="#">
-              Privacy
-            </a>
-            <a className="transition-colors hover:text-primary" href="#">
-              Terms
-            </a>
-            <a className="transition-colors hover:text-primary" href="#">
-              Status
-            </a>
-          </div>
-        </div>
-      </footer>
-
-      <style>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(400%); }
-        }
-      `}</style>
     </div>
   );
 }

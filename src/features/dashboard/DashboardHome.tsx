@@ -1,356 +1,416 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateProfileMutation } from "@/services/api/profileApi";
 import { useGetRolesQuery } from "@/services/api/rolesApi";
+import { useGetDashboardQuery } from "@/services/api/progressApi";
 import { OnboardingObjectiveStep, goalLabel, type OnboardingGoal } from "@/features/onboarding/OnboardingObjectiveStep";
 import {
   OnboardingMasteryStep,
   frameworkLabels,
   type FrameworkSlug,
 } from "@/features/onboarding/OnboardingMasteryStep";
+import { QuickScoreFlow } from "@/features/quick-score/QuickScoreFlow";
+import { PostOnboardingHome } from "@/features/dashboard/PostOnboardingHome";
 import {
   setFocusFrameworkLabels,
   setFocusFrameworks,
   setGrowthPath,
 } from "@/lib/growthPath";
+import { OnboardingShell } from "@/components/layout/OnboardingShell";
 import { cn } from "@/lib/utils";
 
-const DEFAULT_SKILLS = [
-  "React",
-  "TypeScript",
-  "Next.js",
-  "Python",
-  "AWS",
-  "PostgreSQL",
-] as const;
+type LanguageId = "javascript" | "python" | "sql";
+
+const LANGUAGES: {
+  id: LanguageId;
+  label: string;
+  frameworks: FrameworkSlug[];
+}[] = [
+  {
+    id: "javascript",
+    label: "JavaScript / TypeScript",
+    frameworks: ["react", "nextjs"],
+  },
+  {
+    id: "python",
+    label: "Python",
+    frameworks: ["django", "fastapi"],
+  },
+  {
+    id: "sql",
+    label: "SQL",
+    frameworks: ["postgresql"],
+  },
+];
+
+const FRAMEWORK_OPTIONS: {
+  id: FrameworkSlug;
+  label: string;
+  language: LanguageId;
+}[] = [
+  { id: "react", label: "React", language: "javascript" },
+  { id: "nextjs", label: "Next.js", language: "javascript" },
+  { id: "django", label: "Django", language: "python" },
+  { id: "fastapi", label: "FastAPI", language: "python" },
+  { id: "postgresql", label: "PostgreSQL", language: "sql" },
+];
 
 export function DashboardHome() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2 | "mastery" | 3>(1);
-  const [currentRole, setCurrentRole] = useState("Frontend Developer");
-  const [years, setYears] = useState("4");
-  const [selected, setSelected] = useState<string[]>([
-    "React",
-    "TypeScript",
-    "Next.js",
-  ]);
-  const [customSkill, setCustomSkill] = useState("");
-  const [addingCustom, setAddingCustom] = useState(false);
-  const [skills, setSkills] = useState<string[]>([...DEFAULT_SKILLS]);
+  const { data: dashboard, isLoading: dashboardLoading } = useGetDashboardQuery();
+  const [step, setStep] = useState<1 | "quick" | 2 | "mastery" | 3>(1);
+  const [currentRole, setCurrentRole] = useState("");
+  const [years, setYears] = useState("");
+  const [languages, setLanguages] = useState<LanguageId[]>([]);
+  const [frameworks, setFrameworks] = useState<FrameworkSlug[]>([]);
   const [goal, setGoal] = useState<OnboardingGoal | null>(null);
-  const [frameworks, setFrameworks] = useState<FrameworkSlug[]>(["react"]);
+  const [targetFrameworks, setTargetFrameworks] = useState<FrameworkSlug[]>([]);
   const { data: roles } = useGetRolesQuery();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
-  const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const languageSet = useMemo(() => new Set(languages), [languages]);
+  const frameworkSet = useMemo(() => new Set(frameworks), [frameworks]);
 
-  function toggleSkill(skill: string) {
-    setSelected((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
+  const availableFrameworks = useMemo(
+    () =>
+      FRAMEWORK_OPTIONS.filter((f) =>
+        languages.length ? languageSet.has(f.language) : false,
+      ),
+    [languages, languageSet],
+  );
+
+  const knownSkills = useMemo(() => {
+    const langLabels = LANGUAGES.filter((l) => languageSet.has(l.id)).map(
+      (l) => l.label,
     );
-  }
+    const fwLabels = FRAMEWORK_OPTIONS.filter((f) => frameworkSet.has(f.id)).map(
+      (f) => f.label,
+    );
+    return [...langLabels, ...fwLabels];
+  }, [languageSet, frameworkSet]);
 
-  function addCustomSkill() {
-    const name = customSkill.trim();
-    if (!name) {
-      setAddingCustom(false);
-      return;
-    }
-    if (!skills.includes(name)) {
-      setSkills((prev) => [...prev, name]);
-    }
-    setSelected((prev) => (prev.includes(name) ? prev : [...prev, name]));
-    setCustomSkill("");
-    setAddingCustom(false);
+  const canContinueBaseline =
+    currentRole.trim().length > 0 &&
+    years.trim().length > 0 &&
+    !Number.isNaN(Number(years)) &&
+    Number(years) >= 0 &&
+    languages.length > 0 &&
+    frameworks.length > 0;
+
+  useEffect(() => {
+    const sessionId = dashboard?.active_diagnostic_session_id;
+    if (!sessionId) return;
+    router.replace(`/diagnostic/session/${sessionId}`);
+  }, [dashboard?.active_diagnostic_session_id, router]);
+
+  function toggleLanguage(id: LanguageId) {
+    setLanguages((prev) => {
+      const next = prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id];
+      const allowed = new Set(
+        FRAMEWORK_OPTIONS.filter((f) => next.includes(f.language)).map(
+          (f) => f.id,
+        ),
+      );
+      setFrameworks((fw) => fw.filter((f) => allowed.has(f)));
+      return next;
+    });
   }
 
   function toggleFramework(id: FrameworkSlug) {
+    const option = FRAMEWORK_OPTIONS.find((f) => f.id === id);
+    if (!option || !languageSet.has(option.language)) return;
     setFrameworks((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
     );
   }
 
+  function toggleTargetFramework(id: FrameworkSlug) {
+    setTargetFrameworks((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
+    );
+  }
+
   async function continueFromBaseline() {
+    if (!canContinueBaseline) return;
     try {
-      const yearsNum = years === "" ? undefined : Number(years);
+      const yearsNum = Number(years);
       await updateProfile({
-        current_role: currentRole || undefined,
-        years_of_experience:
-          yearsNum != null && !Number.isNaN(yearsNum) ? yearsNum : undefined,
-        known_skills: selected,
+        current_role: currentRole.trim(),
+        years_of_experience: yearsNum,
+        known_skills: knownSkills,
       }).unwrap();
     } catch {
       // Demo flow: continue even if API is unavailable
     }
+    // Persist current stack early so Quick Score + diagnostic stay scoped.
+    setFocusFrameworks(frameworks);
+    setFocusFrameworkLabels(frameworkLabels(frameworks));
     setStep(2);
   }
 
   async function continueFromGoal() {
     if (!goal) return;
     setGrowthPath(goal);
+    void updateProfile({
+      technical_goal: goalLabel(goal),
+      known_skills: knownSkills,
+    });
+    setStep("quick");
+  }
+
+  function continueFromQuickScore() {
     if (goal === "current-job") {
-      setStep("mastery");
+      // Current stack already chosen in step 1 — go straight to diagnostic.
+      void goToDiagnostic(frameworks, "current-job");
     } else {
       setStep(3);
     }
-    void updateProfile({
-      technical_goal: goalLabel(goal),
-      known_skills: selected,
-    });
   }
 
-  async function continueFromMastery() {
-    if (!frameworks.length) return;
-
-    const target = currentRole.trim() || "your current role";
+  async function goToDiagnostic(
+    focusFrameworks: FrameworkSlug[],
+    path: OnboardingGoal,
+  ) {
+    if (!focusFrameworks.length) return;
+    const focus = frameworkLabels(focusFrameworks);
+    const target =
+      path === "current-job"
+        ? currentRole.trim() || "your current role"
+        : focus;
     const matched = roles?.find(
       (r) => r.name.toLowerCase() === target.toLowerCase(),
     );
-    const focus = frameworkLabels(frameworks);
 
-    setGrowthPath("current-job");
+    setGrowthPath(path);
+    setFocusFrameworks(focusFrameworks);
     setFocusFrameworkLabels(focus);
-    setFocusFrameworks(frameworks);
 
-    void updateProfile({
-      current_role: currentRole || undefined,
-      technical_goal: `${goalLabel("current-job")} · ${focus}`,
-      target_role_label: target,
-      target_role_id: matched?.id ?? null,
-      known_skills: selected,
-      complete_onboarding: true,
-    });
+    try {
+      await updateProfile({
+        current_role: currentRole.trim() || undefined,
+        technical_goal: `${goalLabel(path)} · ${focus}`,
+        target_role_label: target,
+        target_role_id: matched?.id ?? null,
+        known_skills: knownSkills,
+        complete_onboarding: true,
+      }).unwrap();
+    } catch {
+      // Demo flow
+    }
 
     const q = new URLSearchParams();
     q.set("target", target);
     router.push(`/diagnostic?${q.toString()}`);
   }
 
-  async function startDiagnostic() {
-    if (!frameworks.length) return;
-    const label = frameworkLabels(frameworks);
-    const matched = roles?.find(
-      (r) => r.name.toLowerCase() === label.toLowerCase(),
+  if (dashboardLoading) {
+    return (
+      <p className="p-6 text-sm text-on-surface-variant">Loading your progress…</p>
     );
-    const focus = frameworkLabels(frameworks);
-    setGrowthPath(goal === "current-job" ? "current-job" : "new-role");
-    setFocusFrameworks(frameworks);
-    setFocusFrameworkLabels(focus);
-    try {
-      await updateProfile({
-        current_role: currentRole || undefined,
-        technical_goal: goal ? `${goalLabel(goal)} · ${focus}` : undefined,
-        target_role_label: label || focus,
-        target_role_id: matched?.id ?? null,
-        known_skills: selected,
-        complete_onboarding: true,
-      }).unwrap();
-    } catch {
-      // Demo flow
-    }
-    const q = new URLSearchParams();
-    if (label) q.set("target", label);
-    router.push(`/diagnostic${q.toString() ? `?${q}` : ""}`);
+  }
+
+  if (dashboard?.active_diagnostic_session_id) {
+    return (
+      <p className="p-6 text-sm text-on-surface-variant">
+        Resuming your diagnostic…
+      </p>
+    );
+  }
+
+  if (dashboard?.onboarding_completed) {
+    return <PostOnboardingHome dashboard={dashboard} />;
   }
 
   if (step === 2) {
     return (
-      <div className="min-h-[calc(100vh-64px)] w-full bg-background">
-        <OnboardingObjectiveStep
-          selected={goal}
-          onSelect={setGoal}
-          onContinue={continueFromGoal}
-          onBack={() => setStep(1)}
-          isLoading={isLoading}
-        />
-      </div>
+      <OnboardingObjectiveStep
+        selected={goal}
+        onSelect={setGoal}
+        onContinue={continueFromGoal}
+        onBack={() => setStep(1)}
+        isLoading={isLoading}
+      />
+    );
+  }
+
+  if (step === "quick") {
+    return (
+      <QuickScoreFlow
+        currentRole={currentRole}
+        knownSkills={knownSkills}
+        onBack={() => setStep(2)}
+        onComplete={continueFromQuickScore}
+      />
     );
   }
 
   if (step === "mastery") {
     return (
-      <div className="min-h-[calc(100vh-64px)] w-full bg-background">
-        <OnboardingMasteryStep
-          frameworks={frameworks}
-          onToggleFramework={toggleFramework}
-          onContinue={continueFromMastery}
-          onBack={() => setStep(2)}
-        />
-      </div>
+      <OnboardingMasteryStep
+        frameworks={frameworks}
+        onToggleFramework={toggleFramework}
+        onContinue={() => void goToDiagnostic(frameworks, "current-job")}
+        onBack={() => setStep("quick")}
+      />
     );
   }
 
   if (step === 3) {
     return (
-      <div className="min-h-[calc(100vh-64px)] w-full bg-background">
-        <OnboardingMasteryStep
-          frameworks={frameworks}
-          onToggleFramework={toggleFramework}
-          onContinue={startDiagnostic}
-          onBack={() => setStep(2)}
-          isLoading={isLoading}
-          title="Which stack are you switching toward?"
-          subtitle="Select the frameworks you want your diagnostic and roadmap centered on."
-        />
-      </div>
+      <OnboardingMasteryStep
+        frameworks={targetFrameworks}
+        onToggleFramework={toggleTargetFramework}
+        onContinue={() => void goToDiagnostic(targetFrameworks, "new-role")}
+        onBack={() => setStep("quick")}
+        isLoading={isLoading}
+        title="Which stack are you switching toward?"
+        subtitle="Select only the frameworks for your target role. Diagnostics stay scoped to that stack."
+      />
     );
   }
 
   return (
-    <div className="relative flex h-full min-h-[calc(100vh-64px)] w-full flex-col overflow-hidden bg-background">
-      <div className="pointer-events-none absolute right-0 top-0 -mr-[200px] -mt-[200px] h-[800px] w-[800px] rounded-full bg-primary/5 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 left-0 -mb-[150px] -ml-[150px] h-[600px] w-[600px] rounded-full bg-secondary-container/10 blur-[100px]" />
+    <OnboardingShell
+      maxWidthClassName="max-w-2xl"
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <p className="body-sm text-on-surface-variant">* Required</p>
+          <button
+            type="button"
+            onClick={continueFromBaseline}
+            disabled={isLoading || !canContinueBaseline}
+            className="flex shrink-0 items-center gap-2 rounded-lg px-6 py-3 headline-sm text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-60"
+            style={{ backgroundColor: "rgb(59, 130, 246)" }}
+          >
+            {isLoading ? "Saving…" : "Continue"}
+            <span className="material-symbols-outlined text-[20px]">
+              arrow_forward
+            </span>
+          </button>
+        </div>
+      }
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex gap-1.5">
+          <div className="h-1.5 w-7 rounded-full bg-primary" />
+          <div className="h-1.5 w-7 rounded-full bg-surface-container-highest" />
+          <div className="h-1.5 w-7 rounded-full bg-surface-container-highest" />
+        </div>
+        <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+          Step 01 / 03
+        </span>
+      </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col justify-center px-6 py-10">
-        <div className="mx-auto w-full max-w-[600px] rounded-lg bg-surface-container-low p-6">
-          <div className="mb-10 flex items-center justify-between">
-            <div className="flex gap-2">
-              <div className="h-2 w-8 rounded-full bg-primary" />
-              <div className="h-2 w-8 rounded-full bg-surface-container-highest" />
-              <div className="h-2 w-8 rounded-full bg-surface-container-highest" />
-            </div>
-            <div className="rounded bg-surface-container px-2 py-[2px] font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-on-surface-variant">
-              Step 01 / 03
-            </div>
+      <h1 className="text-[28px] font-semibold leading-8 tracking-tight text-on-surface sm:text-[32px] sm:leading-9">
+        Where are you today?
+      </h1>
+      <p className="mt-1.5 body-sm text-on-surface-variant">
+        Role, experience, and the language + framework stack to scope your
+        diagnostic.
+      </p>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="group sm:col-span-2">
+          <label className="mb-1 block font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+            Current Role <span className="text-primary">*</span>
+          </label>
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant group-focus-within:text-primary">
+              work
+            </span>
+            <input
+              type="text"
+              value={currentRole}
+              onChange={(e) => setCurrentRole(e.target.value)}
+              placeholder="e.g., Backend Developer"
+              required
+              className="w-full rounded-lg bg-surface-container-lowest py-2.5 pl-10 pr-3 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface outline-none ring-1 ring-outline-variant/30 focus:ring-primary"
+            />
           </div>
+        </div>
 
-          <div className="mb-10">
-            <h1 className="display-lg mb-2 text-on-surface !text-[40px] !leading-[48px] sm:!text-[48px] sm:!leading-[56px]">
-              Where are you today?
-            </h1>
-            <p className="body-lg text-on-surface-variant">
-              Let&apos;s establish your baseline to tailor the learning path.
-            </p>
-          </div>
-
-          <div className="mb-10 space-y-6">
-            <div className="group">
-              <label className="mb-1 block font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-on-surface-variant">
-                Current Role
-              </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
-                  work
-                </span>
-                <input
-                  type="text"
-                  value={currentRole}
-                  onChange={(e) => setCurrentRole(e.target.value)}
-                  placeholder="e.g., Frontend Developer"
-                  className="w-full rounded-lg bg-surface-container-lowest p-4 pl-12 font-[family-name:var(--font-jetbrains-mono)] text-[13px] leading-5 text-on-surface transition-all focus:bg-surface-container-low focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-
-            <div className="group">
-              <label className="mb-1 block font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-on-surface-variant">
-                Years of Experience
-              </label>
-              <div className="relative">
-                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition-colors group-focus-within:text-primary">
-                  timeline
-                </span>
-                <input
-                  type="number"
-                  value={years}
-                  onChange={(e) => setYears(e.target.value)}
-                  placeholder="e.g., 4"
-                  className="w-full rounded-lg bg-surface-container-lowest p-4 pl-12 font-[family-name:var(--font-jetbrains-mono)] text-[13px] leading-5 text-on-surface transition-all focus:bg-surface-container-low focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <div className="mb-2 flex items-center justify-between">
-              <label className="block font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-on-surface-variant">
-                Core Skills
-              </label>
-              <button
-                type="button"
-                onClick={() => setAddingCustom(true)}
-                className="body-sm text-primary transition-colors hover:text-on-primary-container"
-              >
-                Add Custom
-              </button>
-            </div>
-
-            {addingCustom && (
-              <div className="mb-3 flex gap-2">
-                <input
-                  autoFocus
-                  type="text"
-                  value={customSkill}
-                  onChange={(e) => setCustomSkill(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addCustomSkill();
-                    }
-                    if (e.key === "Escape") {
-                      setAddingCustom(false);
-                      setCustomSkill("");
-                    }
-                  }}
-                  placeholder="Skill name"
-                  className="flex-1 rounded-lg bg-surface-container-lowest px-3 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <button
-                  type="button"
-                  onClick={addCustomSkill}
-                  className="rounded-lg bg-primary-container px-3 py-2 text-sm text-on-primary-container"
-                >
-                  Add
-                </button>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {skills.map((skill) => {
-                const active = selectedSet.has(skill);
-                return (
-                  <button
-                    key={skill}
-                    type="button"
-                    onClick={() => toggleSkill(skill)}
-                    className={cn(
-                      "flex items-center gap-1 rounded-full border px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[13px] leading-5 transition-all",
-                      active
-                        ? "border-primary bg-primary/20 text-primary hover:bg-primary/30"
-                        : "border-outline-variant/30 bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "material-symbols-outlined text-[16px] transition-all",
-                        active ? "opacity-100" : "w-0 -ml-1 opacity-0",
-                      )}
-                    >
-                      {active ? "check" : "add"}
-                    </span>
-                    {skill}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end border-t border-surface-container-highest pt-6">
-            <button
-              type="button"
-              onClick={continueFromBaseline}
-              disabled={isLoading}
-              className="flex items-center gap-2 rounded-lg px-10 py-4 headline-sm shadow-lg shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-60"
-              style={{ backgroundColor: "rgb(59, 130, 246)", color: "white" }}
-            >
-              {isLoading ? "Saving…" : "Continue"}
-              <span className="material-symbols-outlined">arrow_forward</span>
-            </button>
+        <div className="group sm:col-span-2">
+          <label className="mb-1 block font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+            Years of Experience <span className="text-primary">*</span>
+          </label>
+          <div className="relative">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-variant group-focus-within:text-primary">
+              timeline
+            </span>
+            <input
+              type="number"
+              min={0}
+              value={years}
+              onChange={(e) => setYears(e.target.value)}
+              placeholder="e.g., 4"
+              required
+              className="w-full rounded-lg bg-surface-container-lowest py-2.5 pl-10 pr-3 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface outline-none ring-1 ring-outline-variant/30 focus:ring-primary"
+            />
           </div>
         </div>
       </div>
-    </div>
+
+      <div className="mt-5">
+        <label className="mb-1.5 block font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+          Programming Language <span className="text-primary">*</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {LANGUAGES.map((lang) => {
+            const active = languageSet.has(lang.id);
+            return (
+              <button
+                key={lang.id}
+                type="button"
+                onClick={() => toggleLanguage(lang.id)}
+                className={cn(
+                  "rounded-full border px-3.5 py-1.5 font-[family-name:var(--font-jetbrains-mono)] text-[12px] transition-all",
+                  active
+                    ? "border-primary bg-primary/20 text-primary"
+                    : "border-outline-variant/30 bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
+                )}
+              >
+                {lang.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <label className="mb-1.5 block font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+          Framework <span className="text-primary">*</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {availableFrameworks.length ? (
+            availableFrameworks.map((fw) => {
+              const active = frameworkSet.has(fw.id);
+              return (
+                <button
+                  key={fw.id}
+                  type="button"
+                  onClick={() => toggleFramework(fw.id)}
+                  className={cn(
+                    "rounded-full border px-3.5 py-1.5 font-[family-name:var(--font-jetbrains-mono)] text-[12px] transition-all",
+                    active
+                      ? "border-primary bg-primary/20 text-primary"
+                      : "border-outline-variant/30 bg-surface-container text-on-surface-variant hover:bg-surface-container-high",
+                  )}
+                >
+                  {fw.label}
+                </button>
+              );
+            })
+          ) : (
+            <p className="body-sm text-on-surface-variant">
+              Select a language to unlock frameworks.
+            </p>
+          )}
+        </div>
+      </div>
+    </OnboardingShell>
   );
 }

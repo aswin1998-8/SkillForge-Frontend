@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const nav = [
   { href: "/dashboard", label: "Home", icon: "home" },
   { href: "/roadmap", label: "Roadmap", icon: "map" },
+  { href: "/skill-gaps", label: "Skill Gaps", icon: "analytics" },
   { href: "/sessions", label: "History", icon: "history" },
   { href: "/profile", label: "Profile", icon: "person" },
   { href: "/settings", label: "Settings", icon: "settings" },
@@ -56,6 +57,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 : item.label === "Roadmap"
                   ? pathname === "/roadmap" ||
                     pathname.startsWith("/roadmap/")
+                  : item.label === "Skill Gaps"
+                    ? pathname === "/skill-gaps" ||
+                      pathname.startsWith("/skill-gaps/")
                   : item.label === "History"
                   ? pathname === "/sessions" ||
                     pathname.startsWith("/sessions/")
@@ -128,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="pt-16">
           <EmailVerificationBanner />
-          <main className="min-h-screen w-full">{children}</main>
+          <main className="w-full overflow-x-hidden">{children}</main>
         </div>
       </div>
     </div>

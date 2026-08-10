@@ -12,6 +12,13 @@ export const diagnosticApi = baseApi.injectEndpoints({
       query: () => "/framework-topics/",
       providesTags: ["Diagnostics"],
     }),
+    getActiveDiagnosticSession: build.query<
+      { active_session: DiagnosticSession | null },
+      void
+    >({
+      query: () => "/diagnostic-sessions/",
+      providesTags: ["Sessions", "Dashboard"],
+    }),
     startDiagnosticSession: build.mutation<
       DiagnosticSession,
       { goal: DiagnosticSessionGoal; framework_slugs: string[] }
@@ -96,6 +103,7 @@ export const diagnosticApi = baseApi.injectEndpoints({
 
 export const {
   useGetFrameworkTopicsQuery,
+  useGetActiveDiagnosticSessionQuery,
   useStartDiagnosticSessionMutation,
   useGetDiagnosticSessionQuery,
   useSubmitSessionAnswersMutation,

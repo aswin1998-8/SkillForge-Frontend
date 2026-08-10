@@ -1,6 +1,19 @@
 export type GrowthPath = "current-job" | "new-role";
 
-export type FrameworkSlug = "react" | "nextjs" | "django" | "fastapi";
+export type FrameworkSlug =
+  | "react"
+  | "nextjs"
+  | "django"
+  | "fastapi"
+  | "postgresql";
+
+const FRAMEWORK_ALLOWLIST: FrameworkSlug[] = [
+  "react",
+  "nextjs",
+  "django",
+  "fastapi",
+  "postgresql",
+];
 
 const STORAGE_KEY = "forgeiq_growth_path";
 const FRAMEWORK_KEY = "forgeiq_focus_frameworks";
@@ -21,6 +34,13 @@ export function setFocusFrameworkLabels(labels: string) {
   window.localStorage.setItem(FRAMEWORK_LABELS_KEY, labels);
 }
 
+export function clearStoredGrowthPathState() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(STORAGE_KEY);
+  window.localStorage.removeItem(FRAMEWORK_KEY);
+  window.localStorage.removeItem(FRAMEWORK_LABELS_KEY);
+}
+
 export function getStoredFocusFrameworks(): FrameworkSlug[] {
   if (typeof window === "undefined") return [];
   try {
@@ -29,7 +49,7 @@ export function getStoredFocusFrameworks(): FrameworkSlug[] {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed)
       ? parsed.filter((x): x is FrameworkSlug =>
-          ["react", "nextjs", "django", "fastapi"].includes(String(x)),
+          FRAMEWORK_ALLOWLIST.includes(String(x) as FrameworkSlug),
         )
       : [];
   } catch {

@@ -235,19 +235,12 @@ export function LandingPage() {
                 </div>
 
                 <h1 className="w-full max-w-2xl font-[family-name:var(--font-geist)] text-[48px] font-bold leading-[56px] tracking-[-0.04em] text-on-background sm:text-[56px] sm:leading-[64px] lg:text-[64px] lg:leading-[72px]">
-                  Stop{" "}
-                  <span className="text-surface-bright/80 line-through decoration-outline-variant">
-                    consuming
-                  </span>
-                  .
-                  <br />
-                  Start <span className="text-on-surface">proving</span>.
+                  AI can write your code.
                 </h1>
 
                 <p className="headline-sm w-full max-w-xl text-on-surface-variant">
-                  Build the technical skills your next role actually requires —
-                  one rigorous engineering challenge at a time. Leave tutorial
-                  hell behind.
+                  Honed makes sure you can still catch it when it&apos;s wrong —
+                  built on real engineering fundamentals, not another AI wrapper.
                 </p>
 
                 <div className="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
@@ -256,7 +249,7 @@ export function LandingPage() {
                     className="group flex items-center justify-center gap-2 rounded px-6 py-4 body-sm font-medium text-white transition-all duration-300 hover:brightness-110"
                     style={{ backgroundColor: "#3B82F6" }}
                   >
-                    Find My Skill Gaps
+                    Get my Skill Gap Analysis
                     <MaterialIcon
                       name="arrow_forward"
                       className="text-[18px] transition-transform group-hover:translate-x-1"
@@ -305,6 +298,12 @@ export function LandingPage() {
                 A rigorous, feedback-driven methodology designed to forge genuine
                 capability, not just passing familiarity.
               </p>
+              <Link
+                href="/how-this-works"
+                className="relative mt-4 inline-flex body-sm text-primary underline-offset-4 hover:underline"
+              >
+                Read full methodology
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 border border-outline-variant md:grid-cols-2 lg:grid-cols-4">
@@ -412,19 +411,27 @@ export function LandingPage() {
 
           <section className="mx-auto mb-10 w-full max-w-[1440px] px-6 py-10 text-center">
             <h2 className="headline-md mb-4 text-on-background">
-              Ready to prove it?
+              Ready to see your gaps?
             </h2>
             <p className="body-sm mx-auto mb-6 max-w-xl text-on-surface-variant">
-              Access the beta and start identifying the specific engineering
-              challenges standing between you and your target role.
+              Start with a Skill Gap Analysis, then get a personalized report and
+              practice roadmap.
             </p>
-            <Link
-              href="/signup"
-              className="inline-block rounded px-10 py-4 body-lg font-semibold transition-all duration-300 hover:brightness-110"
-              style={{ backgroundColor: "#adc6ff", color: "#002e6a" }}
-            >
-              Initialize Assessment
-            </Link>
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href="/signup"
+                className="inline-block rounded px-10 py-4 body-lg font-semibold transition-all duration-300 hover:brightness-110"
+                style={{ backgroundColor: "#adc6ff", color: "#002e6a" }}
+              >
+                Initialize Assessment
+              </Link>
+              <Link
+                href="/how-this-works"
+                className="inline-block rounded border border-outline-variant px-8 py-4 body-sm text-primary transition-colors hover:border-primary/40"
+              >
+                Read full methodology
+              </Link>
+            </div>
           </section>
         </div>
       </main>

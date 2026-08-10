@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMeQuery } from "@/services/api/authApi";
 import { useGetProfileQuery } from "@/services/api/profileApi";
+import { useResetProgressMutation } from "@/services/api/adminApi";
+import { clearStoredGrowthPathState } from "@/lib/growthPath";
+import { getApiErrorMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 export function SettingsPage() {
+  const router = useRouter();
   const { data: user } = useMeQuery();
   const { data: profile } = useGetProfileQuery();
   const [editingObjective, setEditingObjective] = useState(false);
@@ -15,6 +20,9 @@ export function SettingsPage() {
   const [language, setLanguage] = useState("en");
   const [twoFactor, setTwoFactor] = useState(true);
   const [mobileSession, setMobileSession] = useState(true);
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetProgress, { isLoading: resetting }] = useResetProgressMutation();
 
   const goal =
     objective ||
@@ -22,6 +30,20 @@ export function SettingsPage() {
     "Switch to a new technical role to broaden architectural expertise.";
   const targetRole = profile?.target_role?.name || "AI Engineer";
   const readiness = 35;
+
+  async function handleNuclearReset() {
+    if (resetConfirm !== "RESET" || resetting) return;
+    setResetError(null);
+    try {
+      await resetProgress({ confirm: "RESET" }).unwrap();
+      clearStoredGrowthPathState();
+      router.replace("/dashboard");
+    } catch (err) {
+      setResetError(
+        getApiErrorMessage(err, "Could not reset progress. Staff access required."),
+      );
+    }
+  }
 
   return (
     <div className="flex w-full flex-col">
@@ -306,6 +328,48 @@ export function SettingsPage() {
               </div>
             </div>
           </section>
+
+          {user?.is_staff ? (
+            <section className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
+                <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-error">
+                  Admin
+                </span>
+                <h2 className="headline-sm text-on-surface">Reset progress</h2>
+              </div>
+              <div className="flex flex-col gap-4 rounded-xl border border-error/30 bg-surface-container p-4">
+                <p className="body-sm text-on-surface-variant">
+                  Irreversible. Wipes diagnostics, roadmap, gaps, challenge
+                  attempts, sessions, and onboarding fields for{" "}
+                  <span className="text-on-surface">{user.email}</span>. Your
+                  login stays; Home returns to the initial onboarding flow.
+                </p>
+                <label className="flex flex-col gap-2">
+                  <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] uppercase tracking-wider text-on-surface-variant">
+                    Type RESET to confirm
+                  </span>
+                  <input
+                    value={resetConfirm}
+                    onChange={(e) => setResetConfirm(e.target.value)}
+                    placeholder="RESET"
+                    className="rounded-lg border border-outline-variant/50 bg-surface-dim px-3 py-2 body-sm text-on-surface focus:border-primary focus:outline-none"
+                    autoComplete="off"
+                  />
+                </label>
+                {resetError ? (
+                  <p className="body-sm text-error">{resetError}</p>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={resetConfirm !== "RESET" || resetting}
+                  onClick={() => void handleNuclearReset()}
+                  className="self-start rounded-lg bg-error px-4 py-2 body-sm text-on-error transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {resetting ? "Resetting…" : "Reset my progress"}
+                </button>
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
 

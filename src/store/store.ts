@@ -4,11 +4,13 @@ import { baseApi } from "@/services/api/baseApi";
 
 // Ensure endpoint injection runs before store usage
 import "@/services/api/authApi";
+import "@/services/api/adminApi";
 import "@/services/api/profileApi";
 import "@/services/api/rolesApi";
 import "@/services/api/diagnosticApi";
 import "@/services/api/gapApi";
 import "@/services/api/challengeApi";
+import "@/services/api/quickScoreApi";
 import "@/services/api/sessionApi";
 import "@/services/api/progressApi";
 

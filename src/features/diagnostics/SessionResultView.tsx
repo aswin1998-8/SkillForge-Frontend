@@ -1,7 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import type { DiagnosticSession } from "@/types/api";
+import type { DiagnosticSession, MarketEvidence } from "@/types/api";
+
+function EvidenceList({ evidence }: { evidence?: MarketEvidence[] }) {
+  if (!evidence?.length) return null;
+  return (
+    <ul className="mt-2 space-y-1 border-l border-outline-variant/40 pl-3">
+      {evidence.map((e, i) => (
+        <li key={`${e.source_name}-${i}`} className="body-sm text-on-surface-variant">
+          <span className="text-on-surface">{e.stat_text}</span>
+          <span className="mt-0.5 block font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-outline">
+            {e.source_name}
+            {e.source_date ? ` · ${e.source_date}` : ""}
+            {e.as_of ? ` · as of ${e.as_of}` : ""}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function SessionResultView({ session }: { session: DiagnosticSession }) {
   const synth = session.synthesis || {};
@@ -26,11 +44,15 @@ export function SessionResultView({ session }: { session: DiagnosticSession }) {
 
       <section className="rounded-xl border border-outline-variant/30 bg-surface-container p-5">
         <h2 className="headline-sm text-on-surface">Strengths</h2>
-        <ul className="mt-3 space-y-2 body-sm text-on-surface-variant">
+        <ul className="mt-3 space-y-4 body-sm text-on-surface-variant">
           {strengths.map((s, i) => (
             <li key={`${s.skill_area}-${i}`}>
               <strong className="text-on-surface">{s.skill_area}</strong>
               {s.evidence ? ` — ${s.evidence}` : ""}
+              {s.fragment ? (
+                <p className="mt-1 text-on-surface">{s.fragment}</p>
+              ) : null}
+              <EvidenceList evidence={s.market_evidence} />
             </li>
           ))}
           {!strengths.length ? <li>None listed</li> : null}
@@ -39,11 +61,15 @@ export function SessionResultView({ session }: { session: DiagnosticSession }) {
 
       <section className="rounded-xl border border-outline-variant/30 bg-surface-container p-5">
         <h2 className="headline-sm text-on-surface">Gaps</h2>
-        <ul className="mt-3 space-y-2 body-sm text-on-surface-variant">
+        <ul className="mt-3 space-y-4 body-sm text-on-surface-variant">
           {gaps.map((g, i) => (
             <li key={`${g.skill_area}-${i}`}>
               <strong className="text-on-surface">{g.skill_area}</strong> (Block{" "}
               {g.block}) — {g.severity}
+              {g.fragment ? (
+                <p className="mt-1 text-on-surface">{g.fragment}</p>
+              ) : null}
+              <EvidenceList evidence={g.market_evidence} />
             </li>
           ))}
           {!gaps.length ? <li>None listed</li> : null}
@@ -90,18 +116,24 @@ export function SessionResultView({ session }: { session: DiagnosticSession }) {
         </ol>
       </section>
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/skill-gaps"
+          className="rounded-xl bg-primary px-6 py-3 headline-sm text-on-primary"
+        >
+          View Skill Gap Analysis
+        </Link>
         <Link
           href="/roadmap"
-          className="rounded-xl bg-primary px-6 py-3 headline-sm text-on-primary"
+          className="rounded-xl border border-outline-variant/40 px-6 py-3 body-sm text-on-surface"
         >
           Open roadmap
         </Link>
         <Link
-          href="/dashboard"
-          className="rounded-xl border border-outline-variant/40 px-6 py-3 body-sm text-on-surface"
+          href="/how-this-works"
+          className="rounded-xl border border-outline-variant/40 px-6 py-3 body-sm text-primary"
         >
-          Dashboard
+          How this works
         </Link>
       </div>
     </div>

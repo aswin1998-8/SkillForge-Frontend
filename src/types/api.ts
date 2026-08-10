@@ -47,6 +47,8 @@ export type Profile = {
   known_skills: string[];
   target_learn_skills: string[];
   onboarding_completed: boolean;
+  diagnostic_cycle?: number;
+  diagnostic_difficulty_bump?: number;
   created_at: string;
   updated_at: string;
 };
@@ -68,6 +70,7 @@ export type User = {
   first_name: string;
   last_name: string;
   email_verified: boolean;
+  is_staff?: boolean;
   profile: Profile | null;
   date_joined: string;
 };
@@ -203,6 +206,49 @@ export type UserSkillGap = {
   evidence: GapEvidence[];
   created_at: string;
   updated_at: string;
+  severity?: string | null;
+  fragment?: string | null;
+  skill_area?: string | null;
+  challenge_id?: number | null;
+  latest_evidence_summary?: string | null;
+  progress_percent?: number;
+  market_insight?: string | null;
+};
+
+export type SkillGapAnalysisSummary = {
+  open_count: number;
+  in_progress_count: number;
+  closed_count: number;
+  by_severity: {
+    high: number;
+    medium: number;
+    low: number;
+    unknown: number;
+  };
+  avg_proficiency?: number;
+  active_focus?: number;
+};
+
+export type SkillGapRadarAxis = {
+  key: string;
+  label: string;
+  current: number;
+  target: number;
+};
+
+export type SkillGapMarketTrend = {
+  label: string;
+  stat_text: string;
+  source_name?: string;
+  source_date?: string;
+};
+
+export type SkillGapAnalysisData = {
+  summary: SkillGapAnalysisSummary;
+  radar?: { axes: SkillGapRadarAxis[] };
+  market_trends?: SkillGapMarketTrend[];
+  open_gaps: UserSkillGap[];
+  recently_closed_gaps: UserSkillGap[];
 };
 
 export type ChallengeModality =
@@ -235,6 +281,10 @@ export type Challenge = {
   workspace_config: Record<string, unknown>;
   is_active: boolean;
   skills: ChallengeSkill[];
+  directions?: string[];
+  is_locked?: boolean;
+  today_challenge_id?: number;
+  current_challenge_id?: number;
 };
 
 export type DailyChallengeStatus =
@@ -278,6 +328,7 @@ export type ChallengeAttempt = {
   completed_at: string | null;
   submission: Submission | null;
   confidence: ConfidenceRating | null;
+  debrief_id?: number | null;
 };
 
 export type ChallengeSubmitRequest = {
@@ -345,15 +396,29 @@ export type DashboardData = {
   open_gaps_count: number;
   closed_gaps_count: number;
   open_gaps: UserSkillGap[];
+  recently_closed_gaps?: UserSkillGap[];
   today_challenge: DailyChallenge | null;
   recent_sessions: LearningSession[];
   onboarding_completed: boolean;
+  active_diagnostic_session_id: number | null;
+  diagnostic_completed?: boolean;
+  has_roadmap?: boolean;
+  roadmap_steps_count?: number;
+  roadmap_steps_total?: number;
+  roadmap_steps_closed?: number;
+  roadmap_complete?: boolean;
+  rediagnostic_unlocked?: boolean;
+  diagnostic_difficulty_bump?: number;
+  diagnostic_cycle?: number;
+  roadmap_focus_topics?: string[];
 };
+
+export type RoadmapStepStatus = "not_started" | "in_progress" | "closed";
 
 export type RoadmapStep = {
   gap?: UserSkillGap;
   suggested_challenges?: Challenge[];
-  status?: string;
+  status?: RoadmapStepStatus | string;
   notes?: string[];
   modality?: string;
   topic?: string;
@@ -417,9 +482,27 @@ export type SessionAnswerReveal = {
   rubric_points: string[];
 };
 
+export type MarketEvidence = {
+  stat_text: string;
+  source_name: string;
+  source_date: string;
+  as_of?: string | null;
+};
+
 export type DiagnosticSynthesis = {
-  strengths?: Array<{ skill_area: string; evidence: string }>;
-  gaps?: Array<{ skill_area: string; block: string; severity: string }>;
+  strengths?: Array<{
+    skill_area: string;
+    evidence: string;
+    fragment?: string;
+    market_evidence?: MarketEvidence[];
+  }>;
+  gaps?: Array<{
+    skill_area: string;
+    block: string;
+    severity: string;
+    fragment?: string;
+    market_evidence?: MarketEvidence[];
+  }>;
   transferable_skills?: Array<{
     from_current_role: string;
     applies_to_target: string;
@@ -429,6 +512,60 @@ export type DiagnosticSynthesis = {
     topic: string;
     priority: number;
   }>;
+};
+
+export type QuickScoreChoice = {
+  id: number;
+  choice_text: string;
+};
+
+export type QuickScoreQuestion = {
+  id: number;
+  track: string;
+  competency_area: string;
+  prompt_text: string;
+  weight: number;
+  order: number;
+  choices: QuickScoreChoice[];
+};
+
+export type QuickScoreAttempt = {
+  id: number;
+  track: string;
+  total_score: number;
+  band: string;
+  band_label: string;
+  paragraph: string;
+  paragraph_key: string;
+  created_at: string;
+};
+
+export type QuickScoreQuestionsPayload = {
+  track: string;
+  questions: QuickScoreQuestion[];
+};
+
+export type ChallengeDebriefPayload = {
+  attempt_id: number;
+  status: string;
+  reference_text: string;
+  rubric_items: Array<{
+    id: number;
+    text: string;
+    order: number;
+    follow_ups: Array<{ id: number; question_text: string }>;
+  }>;
+  checklist: Record<string, boolean | string | number>;
+  follow_up_answers: Record<string, string>;
+  selected_follow_ups: Array<{
+    id: number;
+    rubric_item_id: number;
+    question_text: string;
+  }>;
+  strengths: string[];
+  gaps: string[];
+  next_focus: string;
+  checklist_score: number | null;
 };
 
 export type DiagnosticSession = {
@@ -447,6 +584,7 @@ export type DiagnosticSession = {
   selection_log?: Array<Record<string, unknown>>;
   synthesis: DiagnosticSynthesis;
   error: string;
+  difficulty_bump?: number;
   questions: SessionQuestion[];
   current_questions: SessionQuestion[];
   roadmap_items: Array<{

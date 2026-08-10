@@ -48,6 +48,23 @@ export default function ChallengeDetailPage({
 
   return (
     <div className="space-y-6">
+      {challenge.is_locked ? (
+        <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 body-sm text-on-surface">
+          This challenge is locked. Complete your current roadmap challenge first.
+          {challenge.today_challenge_id || challenge.current_challenge_id ? (
+            <>
+              {" "}
+              <Link
+                href={`/challenges/${challenge.current_challenge_id || challenge.today_challenge_id}`}
+                className="text-primary underline-offset-2 hover:underline"
+              >
+                Open current challenge
+              </Link>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-3xl">
           <div className="mb-2 flex flex-wrap gap-2">
@@ -63,7 +80,7 @@ export default function ChallengeDetailPage({
           </p>
         </div>
         <Button asChild variant="secondary" size="sm">
-          <Link href="/challenges/today">Today</Link>
+          <Link href="/roadmap">Roadmap</Link>
         </Button>
       </div>
 
@@ -126,6 +143,7 @@ export default function ChallengeDetailPage({
           <SubmitForm
             challengeId={challenge.id}
             payload={workspace}
+            disabled={Boolean(challenge.is_locked)}
             onSubmitted={(attempt) => {
               router.push(
                 `/challenges/${challenge.id}/submit?attempt=${attempt.id}`,
