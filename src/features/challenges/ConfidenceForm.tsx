@@ -32,7 +32,7 @@ export function ConfidenceForm({ attemptId, onSaved }: ConfidenceFormProps) {
       <div>
         <h2 className="font-semibold">Confidence check</h2>
         <p className="text-sm text-muted">
-          How solid did that attempt feel? Calibrate before debrief.
+          How solid did that attempt feel?
         </p>
       </div>
       <div className="flex gap-2">

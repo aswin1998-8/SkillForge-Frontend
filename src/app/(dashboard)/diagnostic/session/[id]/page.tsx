@@ -2,8 +2,6 @@
 
 import { use, useEffect, useState } from "react";
 import { useGetDiagnosticSessionQuery } from "@/services/api/diagnosticApi";
-import { DiagnosticAnalyzingScreen } from "@/features/diagnostics/DiagnosticAnalyzingScreen";
-import { ProcessingState } from "@/features/diagnostics/ProcessingState";
 import { SessionStageForm } from "@/features/diagnostics/SessionStageForm";
 import { SessionResultView } from "@/features/diagnostics/SessionResultView";
 import { getApiErrorMessage } from "@/lib/errors";
@@ -21,15 +19,7 @@ export default function DiagnosticSessionPage({
 
   const { data, error, isLoading, refetch } = useGetDiagnosticSessionQuery(
     sessionId,
-    {
-      skip: invalid,
-      pollingInterval:
-        local?.status === "GENERATING" ||
-        local?.status === "SYNTHESIZING" ||
-        local?.status === "PENDING"
-          ? 2000
-          : 0,
-    },
+    { skip: invalid },
   );
 
   useEffect(() => {
@@ -39,9 +29,7 @@ export default function DiagnosticSessionPage({
   const session = local ?? data ?? null;
 
   if (invalid) {
-    return (
-      <p className="p-6 text-sm text-error">Invalid diagnostic session.</p>
-    );
+    return <p className="p-6 text-sm text-error">Invalid diagnostic session.</p>;
   }
 
   if (isLoading && !session) {
@@ -56,11 +44,7 @@ export default function DiagnosticSessionPage({
     return (
       <div className="space-y-3 p-6">
         <p className="text-sm text-error">{getApiErrorMessage(error)}</p>
-        <button
-          type="button"
-          className="body-sm text-primary underline"
-          onClick={() => void refetch()}
-        >
+        <button type="button" className="body-sm text-primary underline" onClick={() => void refetch()}>
           Retry
         </button>
       </div>
@@ -70,38 +54,8 @@ export default function DiagnosticSessionPage({
   if (session.status === "FAILED") {
     return (
       <div className="space-y-3 p-6">
-        <p className="text-sm text-error">
-          {session.error || "Diagnostic session failed."}
-        </p>
-        <button
-          type="button"
-          className="body-sm text-primary underline"
-          onClick={() => void refetch()}
-        >
-          Refresh
-        </button>
+        <p className="text-sm text-error">{session.error || "Diagnostic session failed."}</p>
       </div>
-    );
-  }
-
-  if (
-    session.status === "PENDING" ||
-    session.status === "GENERATING" ||
-    session.status === "SYNTHESIZING"
-  ) {
-    if (session.status === "SYNTHESIZING") {
-      return (
-        <div className="flex min-h-[50vh] items-center justify-center p-6">
-          <ProcessingState />
-        </div>
-      );
-    }
-    return (
-      <DiagnosticAnalyzingScreen
-        targetRoleLabel={
-          session.target_role || session.current_role || "your profile"
-        }
-      />
     );
   }
 
@@ -112,21 +66,13 @@ export default function DiagnosticSessionPage({
   const questions = session.current_questions?.length
     ? session.current_questions
     : session.questions.filter(
-        (q) =>
-          q.block === session.current_block &&
-          q.stage === session.current_stage &&
-          q.status === "ASKED",
+        (q) => q.stage === session.current_stage && q.status !== "SELF_RATED",
       );
 
   if (!questions.length) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 p-6">
-        <span className="material-symbols-outlined animate-spin text-[28px] text-primary">
-          progress_activity
-        </span>
-        <p className="body-sm text-on-surface-variant">
-          Preparing the next stage…
-        </p>
+        <p className="body-sm text-on-surface-variant">Preparing the next stage…</p>
       </div>
     );
   }

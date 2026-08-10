@@ -9,7 +9,6 @@ import "@/services/api/rolesApi";
 import "@/services/api/diagnosticApi";
 import "@/services/api/gapApi";
 import "@/services/api/challengeApi";
-import "@/services/api/debriefApi";
 import "@/services/api/sessionApi";
 import "@/services/api/progressApi";
 

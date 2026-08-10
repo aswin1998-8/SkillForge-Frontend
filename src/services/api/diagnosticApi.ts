@@ -1,33 +1,20 @@
 import { baseApi } from "./baseApi";
 import type {
-  Diagnostic,
-  DiagnosticAttempt,
   DiagnosticSession,
   DiagnosticSessionGoal,
-  SaveAnswersRequest,
-  SubmitTurnRequest,
+  FrameworkTopic,
+  SessionAnswerReveal,
 } from "@/types/api";
 
 export const diagnosticApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
-    getDiagnostics: build.query<Diagnostic[], void>({
-      query: () => "/diagnostics/",
+    getFrameworkTopics: build.query<FrameworkTopic[], void>({
+      query: () => "/framework-topics/",
       providesTags: ["Diagnostics"],
-    }),
-    getDiagnostic: build.query<Diagnostic, number>({
-      query: (id) => `/diagnostics/${id}/`,
-      providesTags: (_r, _e, id) => [{ type: "Diagnostics", id }],
-    }),
-    startDiagnostic: build.mutation<DiagnosticAttempt, number>({
-      query: (id) => ({
-        url: `/diagnostics/${id}/start/`,
-        method: "POST",
-      }),
-      invalidatesTags: ["DiagnosticAttempt", "Sessions", "Dashboard"],
     }),
     startDiagnosticSession: build.mutation<
       DiagnosticSession,
-      { goal: DiagnosticSessionGoal; domain_slugs?: string[] }
+      { goal: DiagnosticSessionGoal; framework_slugs: string[] }
     >({
       query: (body) => ({
         url: "/diagnostic-sessions/",
@@ -44,7 +31,14 @@ export const diagnosticApi = baseApi.injectEndpoints({
       DiagnosticSession,
       {
         sessionId: number;
-        body: { answers: Array<{ question_id: number; answer_text: string }> };
+        body: {
+          answers: Array<{
+            question_id: number;
+            answer_text: string;
+            choice_id?: number;
+            confidence_rating?: number;
+          }>;
+        };
       }
     >({
       query: ({ sessionId, body }) => ({
@@ -60,75 +54,52 @@ export const diagnosticApi = baseApi.injectEndpoints({
         "Sessions",
       ],
     }),
-    saveAnswers: build.mutation<
-      DiagnosticAttempt,
-      { attemptId: number; body: SaveAnswersRequest }
+    revealSessionAnswer: build.mutation<
+      SessionAnswerReveal,
+      { sessionId: number; answerId: number }
     >({
-      query: ({ attemptId, body }) => ({
-        url: `/attempts/${attemptId}/answers/`,
-        method: "POST",
-        body,
-      }),
-      invalidatesTags: (_r, _e, { attemptId }) => [
-        { type: "DiagnosticAttempt", id: attemptId },
-      ],
-    }),
-    submitAttempt: build.mutation<DiagnosticAttempt, number>({
-      query: (attemptId) => ({
-        url: `/attempts/${attemptId}/submit/`,
+      query: ({ sessionId, answerId }) => ({
+        url: `/diagnostic-sessions/${sessionId}/answers/${answerId}/reveal/`,
         method: "POST",
       }),
-      invalidatesTags: (_r, _e, attemptId) => [
-        { type: "DiagnosticAttempt", id: attemptId },
-        "Gaps",
-        "Dashboard",
-        "Roadmap",
-        "Sessions",
-      ],
     }),
-    getAttempt: build.query<DiagnosticAttempt, number>({
-      query: (attemptId) => `/attempts/${attemptId}/`,
-      providesTags: (_r, _e, id) => [{ type: "DiagnosticAttempt", id }],
-    }),
-    getNextTurn: build.mutation<DiagnosticAttempt, number>({
-      query: (attemptId) => ({
-        url: `/attempts/${attemptId}/next/`,
-        method: "POST",
-      }),
-      invalidatesTags: (_r, _e, attemptId) => [
-        { type: "DiagnosticAttempt", id: attemptId },
-      ],
-    }),
-    submitTurn: build.mutation<
-      DiagnosticAttempt,
-      { attemptId: number; body: SubmitTurnRequest }
+    selfRateSessionAnswer: build.mutation<
+      DiagnosticSession,
+      {
+        sessionId: number;
+        answerId: number;
+        rubric_alignment: Record<string, "yes" | "no" | "partial">;
+      }
     >({
-      query: ({ attemptId, body }) => ({
-        url: `/attempts/${attemptId}/turns/`,
+      query: ({ sessionId, answerId, rubric_alignment }) => ({
+        url: `/diagnostic-sessions/${sessionId}/answers/${answerId}/self-rate/`,
         method: "POST",
-        body,
+        body: { rubric_alignment },
       }),
-      invalidatesTags: (_r, _e, { attemptId }) => [
-        { type: "DiagnosticAttempt", id: attemptId },
-        "Gaps",
-        "Dashboard",
+      invalidatesTags: (_r, _e, { sessionId }) => [
+        { type: "DiagnosticAttempt", id: `s-${sessionId}` },
         "Roadmap",
-        "Sessions",
       ],
+    }),
+    runSessionTests: build.mutation<
+      { test_results: Array<Record<string, unknown>> },
+      { sessionId: number; question_id: number; code: string }
+    >({
+      query: ({ sessionId, question_id, code }) => ({
+        url: `/diagnostic-sessions/${sessionId}/run-tests/`,
+        method: "POST",
+        body: { question_id, code },
+      }),
     }),
   }),
 });
 
 export const {
-  useGetDiagnosticsQuery,
-  useGetDiagnosticQuery,
-  useStartDiagnosticMutation,
+  useGetFrameworkTopicsQuery,
   useStartDiagnosticSessionMutation,
   useGetDiagnosticSessionQuery,
   useSubmitSessionAnswersMutation,
-  useSaveAnswersMutation,
-  useSubmitAttemptMutation,
-  useGetAttemptQuery,
-  useGetNextTurnMutation,
-  useSubmitTurnMutation,
+  useRevealSessionAnswerMutation,
+  useSelfRateSessionAnswerMutation,
+  useRunSessionTestsMutation,
 } = diagnosticApi;

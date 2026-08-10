@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Honed",
   description:
-    "Technical mastery platform — diagnostics, gap-driven challenges, structured debriefs.",
+    "Technical mastery platform — diagnostics, gap-driven challenges, and static assessments.",
   icons: {
     icon: [{ url: "/favicon-logo.png", type: "image/png" }],
     apple: [{ url: "/apple-touch-icon.png" }],

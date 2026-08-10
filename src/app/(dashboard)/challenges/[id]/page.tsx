@@ -127,11 +127,8 @@ export default function ChallengeDetailPage({
             challengeId={challenge.id}
             payload={workspace}
             onSubmitted={(attempt) => {
-              const debrief = attempt.debrief_session_id
-                ? `&debrief=${attempt.debrief_session_id}`
-                : "";
               router.push(
-                `/challenges/${challenge.id}/submit?attempt=${attempt.id}${debrief}`,
+                `/challenges/${challenge.id}/submit?attempt=${attempt.id}`,
               );
             }}
           />

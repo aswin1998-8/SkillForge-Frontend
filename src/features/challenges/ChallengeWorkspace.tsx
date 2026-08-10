@@ -93,7 +93,7 @@ export function ChallengeWorkspace({
   }
 
   const field =
-    modality === "RESEARCH" || modality === "USE_AI"
+    modality === "RESEARCH"
       ? "research"
       : "text";
 

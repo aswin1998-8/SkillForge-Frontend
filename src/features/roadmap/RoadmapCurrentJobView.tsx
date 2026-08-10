@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMeQuery } from "@/services/api/authApi";
 import { useGetProfileQuery } from "@/services/api/profileApi";
-import { resolveFocusDomain } from "@/lib/growthPath";
+import { resolveFocusFrameworkLabels } from "@/lib/growthPath";
 import { cn } from "@/lib/utils";
 
 const PHASE1_CARDS = [
@@ -66,7 +66,7 @@ export function RoadmapCurrentJobView() {
     user?.profile?.current_role ||
     "Senior Frontend Developer";
 
-  const focusDomain = resolveFocusDomain(profile?.technical_goal);
+  const focusDomain = resolveFocusFrameworkLabels(profile?.technical_goal);
   const focusLine =
     focusDomain.toLowerCase().includes("performance") ||
     focusDomain.toLowerCase().includes("reliability")

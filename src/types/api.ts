@@ -278,7 +278,6 @@ export type ChallengeAttempt = {
   completed_at: string | null;
   submission: Submission | null;
   confidence: ConfidenceRating | null;
-  debrief_session_id?: number | null;
 };
 
 export type ChallengeSubmitRequest = {
@@ -367,30 +366,55 @@ export type RoadmapStep = {
 export type DiagnosticSessionGoal = "sharpen_current" | "switch_role";
 
 export type DiagnosticSessionStatus =
-  | "PENDING"
-  | "GENERATING"
   | "AWAITING_ANSWERS"
-  | "SYNTHESIZING"
   | "COMPLETED"
   | "FAILED";
 
+export type FrameworkTopic = {
+  id: number;
+  framework_name: string;
+  fundamentals_language: string;
+  competency_areas: string[];
+};
+
+export type QuestionChoice = {
+  id: number;
+  choice_text: string;
+};
+
+export type SessionAnswer = {
+  id: number;
+  answer_text: string;
+  choice_id?: number | null;
+  is_correct?: boolean | null;
+  confidence_rating?: number | null;
+  self_rated_alignment?: Record<string, string> | null;
+  grading_detail?: Record<string, unknown>;
+  submitted_at: string;
+  revealed_at?: string | null;
+  self_rated_at?: string | null;
+};
+
 export type SessionQuestion = {
   id: number;
-  block: "A" | "B" | string;
   stage: string;
   order: number;
   competency_area?: string;
   question_text: string;
-  question_type?: string;
-  metadata?: Record<string, unknown>;
+  modality: string;
+  difficulty_tier?: number;
+  language?: string;
+  choices?: QuestionChoice[];
+  test_cases?: Array<{ id: number; input: string; order: number }>;
   status: string;
-  answer?: {
-    id: number;
-    answer_text: string;
-    exposure_confirmed?: boolean | null;
-    submitted_at: string;
-  } | null;
+  answer?: SessionAnswer | null;
   created_at: string;
+};
+
+export type SessionAnswerReveal = {
+  answer_id: number;
+  reference_text: string;
+  rubric_points: string[];
 };
 
 export type DiagnosticSynthesis = {
@@ -411,18 +435,16 @@ export type DiagnosticSession = {
   id: number;
   goal: DiagnosticSessionGoal | string;
   target_role: string;
-  target_taxonomy_id?: number | null;
-  target_taxonomy_name?: string | null;
-  selected_domains?: Array<{ slug: string; domain_name: string }>;
+  selected_frameworks?: Array<{ slug: string; name: string }>;
   assessment_competencies?: Array<{
-    domain_slug: string;
+    framework_slug: string;
     competency_area: string;
+    source?: string;
   }>;
   current_role: string;
   status: DiagnosticSessionStatus | string;
-  current_block: "A" | "B" | string | null;
   current_stage: string | null;
-  low_stakes: boolean;
+  selection_log?: Array<Record<string, unknown>>;
   synthesis: DiagnosticSynthesis;
   error: string;
   questions: SessionQuestion[];

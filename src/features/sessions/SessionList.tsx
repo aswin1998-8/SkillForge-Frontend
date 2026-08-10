@@ -50,11 +50,8 @@ const VISUAL_CARD_BG =
   "https://lh3.googleusercontent.com/aida-public/AB6AXuA8dRGHCSPqhDgpdE3Karozg47-PgDyHQqgNy-8GtjuzO5YU4esMY2aL46z-qIfIaVgew5RKWdjIW2tmFu132QWcuKpb8yMUiiFds2lj1LDUyts9c6zg_9Bt2nqPNS0xkNbNJRzQJ77GniIjMd4i0AQjhVA2cbPYBbUvu_yuI10X1YcbHmdIlINW-P4rXN-Y93_8zjsc_12p7GVLbAKVLXN5ETbW_bWNTPkelsIHqNt8HhwYpqAmCVt";
 
 function sessionHref(session: LearningSession) {
-  if (session.session_type === "DEBRIEF") {
-    return `/debrief/${session.reference_id}`;
-  }
   if (session.session_type === "DIAGNOSTIC") {
-    return `/diagnostic/${session.reference_id}`;
+    return `/diagnostic/session/${session.reference_id}`;
   }
   return `/sessions/${session.id}`;
 }

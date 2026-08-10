@@ -26,7 +26,7 @@ export function SubmitForm({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card/50 px-4 py-3">
       <p className="text-sm text-muted">
-        Submit locks this attempt and starts a structured debrief.
+        Submit locks this attempt for review.
       </p>
       <div className="flex items-center gap-3">
         {error ? (

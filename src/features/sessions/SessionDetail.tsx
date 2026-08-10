@@ -18,11 +18,9 @@ export function SessionDetail({ sessionId }: { sessionId: number }) {
   }
 
   const deepLink =
-    data.session_type === "DEBRIEF"
-      ? `/debrief/${data.reference_id}`
-      : data.session_type === "DIAGNOSTIC"
-        ? `/diagnostic/${data.reference_id}`
-        : null;
+    data.session_type === "DIAGNOSTIC"
+      ? `/diagnostic/session/${data.reference_id}`
+      : null;
 
   return (
     <div className="space-y-6">

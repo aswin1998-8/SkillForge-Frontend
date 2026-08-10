@@ -4,20 +4,15 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUpdateProfileMutation } from "@/services/api/profileApi";
 import { useGetRolesQuery } from "@/services/api/rolesApi";
-import {
-  OnboardingObjectiveStep,
-  goalLabel,
-  type OnboardingGoal,
-} from "@/features/onboarding/OnboardingObjectiveStep";
-import { OnboardingTargetStep } from "@/features/onboarding/OnboardingTargetStep";
+import { OnboardingObjectiveStep, goalLabel, type OnboardingGoal } from "@/features/onboarding/OnboardingObjectiveStep";
 import {
   OnboardingMasteryStep,
-  domainLabels,
-  type TechnicalDomain,
+  frameworkLabels,
+  type FrameworkSlug,
 } from "@/features/onboarding/OnboardingMasteryStep";
 import {
-  setFocusDomain,
-  setFocusDomainIds,
+  setFocusFrameworkLabels,
+  setFocusFrameworks,
   setGrowthPath,
 } from "@/lib/growthPath";
 import { cn } from "@/lib/utils";
@@ -45,10 +40,7 @@ export function DashboardHome() {
   const [addingCustom, setAddingCustom] = useState(false);
   const [skills, setSkills] = useState<string[]>([...DEFAULT_SKILLS]);
   const [goal, setGoal] = useState<OnboardingGoal | null>(null);
-  const [domains, setDomains] = useState<TechnicalDomain[]>(["system-design"]);
-  const [targetRole, setTargetRole] = useState("");
-  const [learnSelected, setLearnSelected] = useState<string[]>([]);
-  const [learnOptions, setLearnOptions] = useState<string[]>([]);
+  const [frameworks, setFrameworks] = useState<FrameworkSlug[]>(["react"]);
   const { data: roles } = useGetRolesQuery();
   const [updateProfile, { isLoading }] = useUpdateProfileMutation();
 
@@ -56,12 +48,6 @@ export function DashboardHome() {
 
   function toggleSkill(skill: string) {
     setSelected((prev) =>
-      prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
-    );
-  }
-
-  function toggleLearnSkill(skill: string) {
-    setLearnSelected((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
     );
   }
@@ -80,8 +66,8 @@ export function DashboardHome() {
     setAddingCustom(false);
   }
 
-  function toggleDomain(id: TechnicalDomain) {
-    setDomains((prev) =>
+  function toggleFramework(id: FrameworkSlug) {
+    setFrameworks((prev) =>
       prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id],
     );
   }
@@ -116,17 +102,17 @@ export function DashboardHome() {
   }
 
   async function continueFromMastery() {
-    if (!domains.length) return;
+    if (!frameworks.length) return;
 
     const target = currentRole.trim() || "your current role";
     const matched = roles?.find(
       (r) => r.name.toLowerCase() === target.toLowerCase(),
     );
-    const focus = domainLabels(domains);
+    const focus = frameworkLabels(frameworks);
 
     setGrowthPath("current-job");
-    setFocusDomain(focus);
-    setFocusDomainIds(domains);
+    setFocusFrameworkLabels(focus);
+    setFocusFrameworks(frameworks);
 
     void updateProfile({
       current_role: currentRole || undefined,
@@ -143,19 +129,22 @@ export function DashboardHome() {
   }
 
   async function startDiagnostic() {
-    const label = targetRole.trim();
+    if (!frameworks.length) return;
+    const label = frameworkLabels(frameworks);
     const matched = roles?.find(
       (r) => r.name.toLowerCase() === label.toLowerCase(),
     );
+    const focus = frameworkLabels(frameworks);
     setGrowthPath(goal === "current-job" ? "current-job" : "new-role");
+    setFocusFrameworks(frameworks);
+    setFocusFrameworkLabels(focus);
     try {
       await updateProfile({
         current_role: currentRole || undefined,
-        technical_goal: goal ? goalLabel(goal) : undefined,
-        target_role_label: label,
+        technical_goal: goal ? `${goalLabel(goal)} · ${focus}` : undefined,
+        target_role_label: label || focus,
         target_role_id: matched?.id ?? null,
         known_skills: selected,
-        target_learn_skills: learnSelected,
         complete_onboarding: true,
       }).unwrap();
     } catch {
@@ -184,8 +173,8 @@ export function DashboardHome() {
     return (
       <div className="min-h-[calc(100vh-64px)] w-full bg-background">
         <OnboardingMasteryStep
-          domains={domains}
-          onToggleDomain={toggleDomain}
+          frameworks={frameworks}
+          onToggleFramework={toggleFramework}
           onContinue={continueFromMastery}
           onBack={() => setStep(2)}
         />
@@ -196,24 +185,14 @@ export function DashboardHome() {
   if (step === 3) {
     return (
       <div className="min-h-[calc(100vh-64px)] w-full bg-background">
-        <OnboardingTargetStep
-          currentRole={currentRole}
-          targetRole={targetRole}
-          onTargetChange={setTargetRole}
-          learnSkills={learnSelected}
-          learnSkillOptions={learnOptions}
-          onToggleLearnSkill={toggleLearnSkill}
-          onAddLearnSkill={(name) => {
-            if (!learnOptions.includes(name)) {
-              setLearnOptions((prev) => [...prev, name]);
-            }
-            setLearnSelected((prev) =>
-              prev.includes(name) ? prev : [...prev, name],
-            );
-          }}
-          onStart={startDiagnostic}
+        <OnboardingMasteryStep
+          frameworks={frameworks}
+          onToggleFramework={toggleFramework}
+          onContinue={startDiagnostic}
           onBack={() => setStep(2)}
           isLoading={isLoading}
+          title="Which stack are you switching toward?"
+          subtitle="Select the frameworks you want your diagnostic and roadmap centered on."
         />
       </div>
     );

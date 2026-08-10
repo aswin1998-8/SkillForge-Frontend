@@ -6,11 +6,10 @@ import { useMeQuery } from "@/services/api/authApi";
 import { useStartDiagnosticSessionMutation } from "@/services/api/diagnosticApi";
 import { getApiErrorMessage } from "@/lib/errors";
 import {
-  getStoredFocusDomainIds,
+  getStoredFocusFrameworks,
   growthPathToDiagnosticGoal,
   resolveGrowthPath,
 } from "@/lib/growthPath";
-import { DiagnosticAnalyzingScreen } from "@/features/diagnostics/DiagnosticAnalyzingScreen";
 
 type Props = {
   targetProfile?: string;
@@ -28,7 +27,7 @@ export function DiagnosticIntro({ targetProfile }: Props) {
     user?.profile?.target_role_label ||
     user?.profile?.target_role?.name ||
     user?.profile?.current_role ||
-    "Your target role";
+    "Your target stack";
 
   const goal = growthPathToDiagnosticGoal(
     resolveGrowthPath(user?.profile?.technical_goal),
@@ -39,16 +38,15 @@ export function DiagnosticIntro({ targetProfile }: Props) {
     setError(null);
     setStarting(true);
     try {
-      const domain_slugs =
-        goal === "sharpen_current" ? getStoredFocusDomainIds() : undefined;
-      if (goal === "sharpen_current" && !domain_slugs?.length) {
+      const framework_slugs = getStoredFocusFrameworks();
+      if (!framework_slugs.length) {
         throw new Error(
-          "Select at least one technical domain before starting the diagnostic.",
+          "Select at least one framework before starting the diagnostic.",
         );
       }
       const session = await startSession({
         goal,
-        ...(domain_slugs?.length ? { domain_slugs } : {}),
+        framework_slugs,
       }).unwrap();
       if (!session?.id) {
         throw new Error("Start did not return a session id.");
@@ -57,10 +55,7 @@ export function DiagnosticIntro({ targetProfile }: Props) {
     } catch (err) {
       setStarting(false);
       setError(
-        getApiErrorMessage(
-          err,
-          "Could not start the diagnostic session. Check the backend and Celery worker.",
-        ),
+        getApiErrorMessage(err, "Could not start the diagnostic session."),
       );
     }
   }
@@ -78,7 +73,11 @@ export function DiagnosticIntro({ targetProfile }: Props) {
   }, [starting, goal]);
 
   if (starting) {
-    return <DiagnosticAnalyzingScreen targetRoleLabel={targetRoleLabel} />;
+    return (
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center">
+        <p className="body-md text-on-surface-variant">Starting diagnostic…</p>
+      </div>
+    );
   }
 
   return (
@@ -106,9 +105,8 @@ export function DiagnosticIntro({ targetProfile }: Props) {
               <span className="italic text-primary">real gaps.</span>
             </h1>
             <p className="body-lg mx-auto max-w-2xl text-on-surface-variant">
-              {goal === "sharpen_current"
-                ? "Block A runs a full adaptive assessment on your current role — foundational through find-issues."
-                : "Block A assesses your current role in depth, then a low-stakes Block B finds your starting line on the target role."}
+              A rule-based adaptive assessment across your selected frameworks —
+              foundational knowledge through coding and reasoning challenges.
             </p>
           </div>
 
@@ -128,13 +126,6 @@ export function DiagnosticIntro({ targetProfile }: Props) {
                 </span>
               </span>
             </button>
-            <p className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant">
-              Press{" "}
-              <kbd className="mx-1 rounded border border-outline-variant/30 bg-surface-container-high px-2 py-1">
-                Enter
-              </kbd>{" "}
-              to start
-            </p>
           </div>
         </div>
       </div>

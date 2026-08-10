@@ -1,32 +1,36 @@
 export type GrowthPath = "current-job" | "new-role";
 
+export type FrameworkSlug = "react" | "nextjs" | "django" | "fastapi";
+
 const STORAGE_KEY = "forgeiq_growth_path";
-const DOMAIN_KEY = "forgeiq_focus_domain";
-const DOMAIN_IDS_KEY = "forgeiq_focus_domain_ids";
+const FRAMEWORK_KEY = "forgeiq_focus_frameworks";
+const FRAMEWORK_LABELS_KEY = "forgeiq_focus_framework_labels";
 
 export function setGrowthPath(path: GrowthPath) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(STORAGE_KEY, path);
 }
 
-export function setFocusDomain(domain: string) {
+export function setFocusFrameworks(ids: FrameworkSlug[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(DOMAIN_KEY, domain);
+  window.localStorage.setItem(FRAMEWORK_KEY, JSON.stringify(ids));
 }
 
-export function setFocusDomainIds(ids: string[]) {
+export function setFocusFrameworkLabels(labels: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(DOMAIN_IDS_KEY, JSON.stringify(ids));
+  window.localStorage.setItem(FRAMEWORK_LABELS_KEY, labels);
 }
 
-export function getStoredFocusDomainIds(): string[] {
+export function getStoredFocusFrameworks(): FrameworkSlug[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(DOMAIN_IDS_KEY);
+    const raw = window.localStorage.getItem(FRAMEWORK_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed)
-      ? parsed.map((x) => String(x)).filter(Boolean)
+      ? parsed.filter((x): x is FrameworkSlug =>
+          ["react", "nextjs", "django", "fastapi"].includes(String(x)),
+        )
       : [];
   } catch {
     return [];
@@ -39,9 +43,9 @@ export function getStoredGrowthPath(): GrowthPath | null {
   return v === "current-job" || v === "new-role" ? v : null;
 }
 
-export function getStoredFocusDomain(): string | null {
+export function getStoredFocusFrameworkLabels(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(DOMAIN_KEY);
+  return window.localStorage.getItem(FRAMEWORK_LABELS_KEY);
 }
 
 export function resolveGrowthPath(technicalGoal?: string | null): GrowthPath {
@@ -60,10 +64,10 @@ export function growthPathToDiagnosticGoal(
   return path === "current-job" ? "sharpen_current" : "switch_role";
 }
 
-export function resolveFocusDomain(technicalGoal?: string | null): string {
-  const stored = getStoredFocusDomain();
+export function resolveFocusFrameworkLabels(technicalGoal?: string | null): string {
+  const stored = getStoredFocusFrameworkLabels();
   if (stored) return stored;
   const parts = (technicalGoal || "").split("·").map((p) => p.trim());
   if (parts.length >= 2) return parts[parts.length - 1]!;
-  return "System Design & Architecture";
+  return "React, Django";
 }

@@ -27,7 +27,6 @@ export const config = {
     "/roadmap/:path*",
     "/diagnostic/:path*",
     "/challenges/:path*",
-    "/debrief/:path*",
     "/sessions/:path*",
     "/profile/:path*",
     "/settings/:path*",
