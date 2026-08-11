@@ -1,22 +1,24 @@
 "use client";
 
-import { Suspense, use } from "react";
-import { useSearchParams } from "next/navigation";
-import { DebriefFlow } from "@/features/challenges/DebriefFlow";
+import { Suspense, use, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
-function DebriefContent({ challengeId }: { challengeId: number }) {
+/**
+ * Debrief is removed from the happy path — redirect to graded submit results.
+ */
+function DebriefRedirect({ challengeId }: { challengeId: number }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const attemptId = Number(searchParams.get("attempt") || 0);
+  const attempt = searchParams.get("attempt");
 
-  if (!attemptId) {
-    return (
-      <p className="body-sm text-on-surface-variant">
-        Missing attempt id. Submit a challenge first.
-      </p>
-    );
-  }
+  useEffect(() => {
+    const qs = attempt ? `?attempt=${attempt}` : "";
+    router.replace(`/challenges/${challengeId}/submit${qs}`);
+  }, [attempt, challengeId, router]);
 
-  return <DebriefFlow attemptId={attemptId} challengeId={challengeId} />;
+  return (
+    <p className="p-6 body-sm text-on-surface-variant">Redirecting…</p>
+  );
 }
 
 export default function ChallengeDebriefPage({
@@ -26,14 +28,12 @@ export default function ChallengeDebriefPage({
 }) {
   const { id } = use(params);
   return (
-    <div className="px-6 py-10">
-      <Suspense
-        fallback={
-          <p className="body-sm text-on-surface-variant">Loading debrief…</p>
-        }
-      >
-        <DebriefContent challengeId={Number(id)} />
-      </Suspense>
-    </div>
+    <Suspense
+      fallback={
+        <p className="p-6 body-sm text-on-surface-variant">Redirecting…</p>
+      }
+    >
+      <DebriefRedirect challengeId={Number(id)} />
+    </Suspense>
   );
 }

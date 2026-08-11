@@ -50,10 +50,7 @@ export function LoginForm() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent" />
 
         <div className="relative z-10">
-          <GoogleSignupButton
-            label="Continue with Google"
-            variant="login"
-          />
+          <GoogleSignupButton variant="login" />
         </div>
 
         <div className="relative z-10 flex w-full items-center gap-4">

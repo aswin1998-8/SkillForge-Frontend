@@ -7,6 +7,7 @@ import {
   useSubmitChallengeMutation,
   useTrackEventMutation,
 } from "@/services/api/challengeApi";
+import { storeAttemptResult } from "@/features/challenges/attemptResultStorage";
 
 type SubmitFormProps = {
   challengeId: number;
@@ -26,6 +27,7 @@ export function SubmitForm({
 
   async function handleSubmit() {
     const attempt = await submit({ challengeId, body: payload }).unwrap();
+    storeAttemptResult(attempt);
     void trackEvent({
       name: "challenge_submitted",
       properties: { challenge_id: challengeId, attempt_id: attempt.id },
@@ -37,8 +39,8 @@ export function SubmitForm({
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card/50 px-4 py-3">
       <p className="text-sm text-muted">
         {disabled
-          ? "This challenge is locked until tomorrow."
-          : "Submit locks this attempt for review."}
+          ? "This challenge is locked until you finish the current roadmap step."
+          : "Submit grades your work against the expected answer."}
       </p>
       <div className="flex items-center gap-3">
         {error ? (
