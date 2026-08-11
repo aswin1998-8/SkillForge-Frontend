@@ -52,10 +52,12 @@ export function ChallengeWorkspace({
     const language =
       (config.language as string | undefined) || "typescript";
     return (
-      <div className="h-[min(560px,70vh)] overflow-hidden rounded border border-border-subtle">
-        <div className="flex items-center justify-between border-b border-border-subtle bg-surface-container-lowest px-3 py-2">
-          <span className="mono-label text-on-surface-variant">{language}</span>
-          <span className="mono-label text-on-surface-variant">Monaco workspace</span>
+      <div className="h-[min(480px,55vh)] min-w-0 overflow-hidden rounded border border-border-subtle sm:h-[min(560px,70vh)]">
+        <div className="flex items-center justify-between gap-2 border-b border-border-subtle bg-surface-container-lowest px-3 py-2">
+          <span className="mono-label truncate text-on-surface-variant">{language}</span>
+          <span className="mono-label hidden text-on-surface-variant sm:inline">
+            Monaco workspace
+          </span>
         </div>
         <MonacoEditor
           height="100%"
@@ -68,6 +70,7 @@ export function ChallengeWorkspace({
             fontSize: 13,
             fontFamily: "var(--font-jetbrains-mono), ui-monospace, monospace",
             scrollBeyondLastLine: false,
+            wordWrap: "on",
             padding: { top: 12 },
           }}
         />
@@ -77,10 +80,14 @@ export function ChallengeWorkspace({
 
   if (modality === "ARCHITECT") {
     return (
-      <div className="h-[min(560px,70vh)] overflow-hidden rounded border border-border-subtle">
-        <div className="flex items-center justify-between border-b border-border-subtle bg-surface-container-lowest px-3 py-2">
-          <span className="mono-label text-on-surface-variant">Architecture canvas</span>
-          <span className="mono-label text-on-surface-variant">React Flow</span>
+      <div className="h-[min(480px,55vh)] min-w-0 overflow-hidden rounded border border-border-subtle sm:h-[min(560px,70vh)]">
+        <div className="flex items-center justify-between gap-2 border-b border-border-subtle bg-surface-container-lowest px-3 py-2">
+          <span className="mono-label truncate text-on-surface-variant">
+            Architecture canvas
+          </span>
+          <span className="mono-label hidden text-on-surface-variant sm:inline">
+            React Flow
+          </span>
         </div>
         <ArchitectCanvas
           value={

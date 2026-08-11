@@ -80,6 +80,10 @@ const baseQueryWithReauth: BaseQueryFn<
 export const baseApi = createApi({
   reducerPath: "api",
   baseQuery: baseQueryWithReauth,
+  // Avoid refetch storms when switching browser tabs (feels laggy on slow APIs).
+  refetchOnFocus: false,
+  refetchOnReconnect: true,
+  keepUnusedDataFor: 60,
   tagTypes: [
     "User",
     "Profile",

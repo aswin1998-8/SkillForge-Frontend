@@ -27,11 +27,11 @@ export function EmailVerificationBanner() {
   }
 
   return (
-    <div className="border-b border-outline-variant/30 bg-primary-container/15 px-6 py-3">
+    <div className="border-b border-outline-variant/30 bg-primary-container/15 px-4 py-3 sm:px-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="body-sm text-on-surface">
+        <p className="min-w-0 break-words body-sm text-on-surface">
           Verify your email to secure your account. We sent a link to{" "}
-          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px]">
+          <span className="break-all font-[family-name:var(--font-jetbrains-mono)] text-[12px]">
             {user.email}
           </span>
           .

@@ -28,7 +28,7 @@ export function SessionResultView({ session }: { session: DiagnosticSession }) {
   const transfers = synth.transferable_skills || [];
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
       <div>
         <p className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] uppercase tracking-[0.08em] text-on-surface-variant">
           Diagnostic complete

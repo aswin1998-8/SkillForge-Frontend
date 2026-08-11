@@ -11,7 +11,7 @@ function SubmitContent({ challengeId }: { challengeId: number }) {
   const attemptId = Number(searchParams.get("attempt") || 0);
 
   return (
-    <div className="mx-auto max-w-xl space-y-6">
+    <div className="mx-auto max-w-xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       <div>
         <p className="text-xs uppercase tracking-wide text-accent">Submitted</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">

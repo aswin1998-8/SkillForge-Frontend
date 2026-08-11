@@ -46,9 +46,9 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="flex w-full flex-col">
-      <div className="mx-auto flex w-full flex-col items-start gap-10 px-6 py-10 md:px-10">
-        <div className="flex w-full flex-grow flex-col gap-10">
+    <div className="flex w-full min-w-0 flex-col overflow-x-hidden">
+      <div className="mx-auto flex w-full flex-col items-start gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-10 md:px-10">
+        <div className="flex w-full min-w-0 flex-grow flex-col gap-8 sm:gap-10">
           <section className="flex flex-col gap-4">
             <div className="flex items-center gap-2 border-b border-outline-variant/30 pb-2">
               <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">

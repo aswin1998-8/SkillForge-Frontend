@@ -130,7 +130,7 @@ export function DebriefFlow({ attemptId, challengeId }: DebriefFlowProps) {
 
   if (phase === "done") {
     return (
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         <div>
           <p className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] uppercase tracking-widest text-primary">
             Debrief complete
@@ -198,7 +198,7 @@ export function DebriefFlow({ attemptId, challengeId }: DebriefFlowProps) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">
       <div>
         <p className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] uppercase tracking-widest text-primary">
           Challenge debrief

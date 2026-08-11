@@ -47,7 +47,7 @@ export default function ChallengeDetailPage({
   const constraints = asStringList(challenge.constraints);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8">
       {challenge.is_locked ? (
         <div className="rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 body-sm text-on-surface">
           This challenge is locked. Complete your current roadmap challenge first.

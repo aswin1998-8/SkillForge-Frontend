@@ -111,19 +111,19 @@ export function DiagnosticIntro({ targetProfile }: Props) {
   }
 
   return (
-    <div className="relative flex min-h-[calc(100vh-64px)] w-full flex-col overflow-hidden">
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col overflow-x-hidden sm:min-h-[calc(100vh-64px)]">
       <div className="pointer-events-none absolute inset-0 opacity-20">
         <div className="absolute right-[-5%] top-[-10%] h-1/2 w-1/2 rounded-full bg-primary opacity-30 blur-[120px] mix-blend-screen" />
         <div className="absolute bottom-[-10%] left-[-5%] h-1/2 w-1/2 rounded-full bg-secondary opacity-20 blur-[120px] mix-blend-screen" />
       </div>
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-center justify-center px-6 py-10">
-        <div className="flex w-full max-w-3xl flex-col items-center space-y-10 text-center">
-          <div className="inline-flex cursor-default items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-high px-4 py-2 shadow-lg backdrop-blur-md">
-            <span className="material-symbols-outlined text-[20px] text-tertiary">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-center justify-center px-4 py-8 sm:px-6 sm:py-10">
+        <div className="flex w-full min-w-0 max-w-3xl flex-col items-center space-y-8 text-center sm:space-y-10">
+          <div className="inline-flex max-w-full cursor-default items-center gap-2 rounded-full border border-outline-variant/30 bg-surface-container-high px-3 py-2 shadow-lg backdrop-blur-md sm:px-4">
+            <span className="material-symbols-outlined shrink-0 text-[20px] text-tertiary">
               psychology
             </span>
-            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface">
+            <span className="min-w-0 truncate font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface sm:text-[13px]">
               {goal === "sharpen_current" ? "Sharpen" : "Switch"} ·{" "}
               <span className="font-bold text-tertiary">{targetRoleLabel}</span>
             </span>

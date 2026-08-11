@@ -122,37 +122,37 @@ export function RoadmapCurrentJobView() {
     (activeStep ? stepTitle(activeStep, 0) : null);
 
   return (
-    <div className="relative flex min-h-[calc(100vh-64px)] w-full flex-col overflow-hidden bg-background">
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col overflow-x-hidden bg-background sm:min-h-[calc(100vh-64px)]">
       <div className="pointer-events-none absolute inset-0 opacity-20">
         <div className="absolute right-[-5%] top-[-10%] h-96 w-96 rounded-full bg-primary/30 blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-5%] h-96 w-96 rounded-full bg-secondary/20 blur-[100px]" />
       </div>
 
-      <div className="relative flex w-full flex-col items-start justify-between gap-6 border-b border-outline-variant/30 bg-surface-dim px-6 py-10 xl:flex-row xl:items-end">
-        <div className="flex max-w-3xl flex-col gap-2">
-          <div className="mb-1 flex flex-wrap items-center gap-4">
-            <span className="rounded-full border border-primary/20 bg-primary/10 px-4 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-widest text-primary">
+      <div className="relative flex w-full min-w-0 flex-col items-start justify-between gap-6 border-b border-outline-variant/30 bg-surface-dim px-4 py-6 sm:px-6 sm:py-10 xl:flex-row xl:items-end">
+        <div className="flex min-w-0 max-w-3xl flex-col gap-2">
+          <div className="mb-1 flex flex-wrap items-center gap-3 sm:gap-4">
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium uppercase tracking-widest text-primary sm:px-4 sm:text-[12px]">
               {data?.source === "diagnostic_synthesis"
                 ? "From your diagnostic"
                 : "Active Growth Plan"}
             </span>
-            <span className="flex items-center gap-2 font-[family-name:var(--font-jetbrains-mono)] text-[13px] text-on-surface-variant">
+            <span className="flex items-center gap-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant sm:text-[13px]">
               <span className="h-2 w-2 animate-pulse rounded-full bg-secondary-fixed" />{" "}
               Sequential unlock
             </span>
           </div>
-          <h1 className="display-lg leading-tight tracking-tight text-on-surface !text-[40px] !leading-[48px] sm:!text-[48px] sm:!leading-[56px]">
+          <h1 className="display-lg leading-tight tracking-tight text-on-surface !text-[32px] !leading-[40px] sm:!text-[48px] sm:!leading-[56px]">
             Growth Plan:
             <br />
-            <span className="text-primary">{roleTitle}</span>
+            <span className="break-words text-primary">{roleTitle}</span>
           </h1>
-          <p className="mt-2 headline-sm text-on-surface-variant">
+          <p className="mt-2 break-words headline-sm text-on-surface-variant">
             Focus: {focusDomain}
             {targetLabel ? ` · toward ${targetLabel}` : ""}
           </p>
         </div>
 
-        <div className="group relative min-w-[200px] overflow-hidden rounded-xl border border-outline-variant/50 bg-surface p-4">
+        <div className="group relative w-full min-w-0 overflow-hidden rounded-xl border border-outline-variant/50 bg-surface p-4 sm:w-auto sm:min-w-[200px]">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
           <div className="flex w-full justify-between font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-wider text-on-surface-variant">
             <span>Overall Mastery</span>
@@ -182,9 +182,9 @@ export function RoadmapCurrentJobView() {
         </div>
       ) : null}
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 py-10 xl:flex-row">
-        <div className="flex flex-1 flex-col gap-6">
-          <div className="group relative border-l border-primary/30 pb-4 pl-10">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-10 xl:flex-row">
+        <div className="flex min-w-0 flex-1 flex-col gap-6">
+          <div className="group relative border-l border-primary/30 pb-4 pl-6 sm:pl-10">
             <div className="absolute -left-3 top-0 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-primary bg-surface">
               <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
             </div>

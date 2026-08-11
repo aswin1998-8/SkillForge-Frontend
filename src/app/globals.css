@@ -176,6 +176,7 @@ html {
 
 body {
   min-height: 100vh;
+  overflow-x: hidden;
   background-color: var(--background);
   background-image:
     radial-gradient(ellipse 70% 45% at 8% -8%, rgba(77, 142, 255, 0.1), transparent 55%),

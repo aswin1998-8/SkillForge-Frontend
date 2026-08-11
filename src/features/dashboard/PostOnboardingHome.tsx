@@ -48,7 +48,7 @@ export function PostOnboardingHome({ dashboard }: Props) {
     steps.length;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full min-w-0 max-w-3xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
       <div>
         <h1 className="headline-md text-on-surface">
           {roadmapComplete

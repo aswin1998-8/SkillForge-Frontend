@@ -278,13 +278,13 @@ export function DashboardHome() {
     <OnboardingShell
       maxWidthClassName="max-w-2xl"
       footer={
-        <div className="flex items-center justify-between gap-3">
-          <p className="body-sm text-on-surface-variant">* Required</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="min-w-0 truncate body-sm text-on-surface-variant">* Required</p>
           <button
             type="button"
             onClick={continueFromBaseline}
             disabled={isLoading || !canContinueBaseline}
-            className="flex shrink-0 items-center gap-2 rounded-lg px-6 py-3 headline-sm text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-60"
+            className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 headline-sm text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-60 sm:px-6 sm:py-3"
             style={{ backgroundColor: "rgb(59, 130, 246)" }}
           >
             {isLoading ? "Saving…" : "Continue"}

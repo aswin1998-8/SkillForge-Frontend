@@ -78,11 +78,11 @@ export function ProfileDetails() {
     : "DEVA-942";
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)] w-full flex-col">
-      <div className="mx-auto flex h-full w-full max-w-[1440px] flex-col px-6 py-10 md:px-10 xl:px-[120px]">
-        <div className="mb-10 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div>
-            <h1 className="display-lg m-0 text-on-background !text-[40px] !leading-[48px] sm:!text-[48px] sm:!leading-[56px]">
+    <div className="flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col overflow-x-hidden sm:min-h-[calc(100vh-64px)]">
+      <div className="mx-auto flex h-full w-full max-w-[1440px] flex-col px-4 py-6 sm:px-6 sm:py-10 md:px-10 xl:px-[120px]">
+        <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:mb-10 md:flex-row md:items-center">
+          <div className="min-w-0">
+            <h1 className="display-lg m-0 text-on-background !text-[32px] !leading-[40px] sm:!text-[48px] sm:!leading-[56px]">
               Profile Details
             </h1>
             <p className="body-lg mt-2 text-on-surface-variant">

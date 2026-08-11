@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/common/BrandLogo";
@@ -16,16 +17,47 @@ const nav = [
   { href: "/settings", label: "Settings", icon: "settings" },
 ];
 
+function navItemActive(pathname: string, item: (typeof nav)[number]) {
+  if (item.label === "Home") return pathname === "/dashboard";
+  if (item.label === "Roadmap") {
+    return pathname === "/roadmap" || pathname.startsWith("/roadmap/");
+  }
+  if (item.label === "Skill Gaps") {
+    return pathname === "/skill-gaps" || pathname.startsWith("/skill-gaps/");
+  }
+  if (item.label === "History") {
+    return pathname === "/sessions" || pathname.startsWith("/sessions/");
+  }
+  if (item.label === "Settings") {
+    return pathname === "/settings" || pathname.startsWith("/settings/");
+  }
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: user } = useMeQuery();
   const [logout] = useLogoutMutation();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const displayName =
     [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
     user?.email?.split("@")[0] ||
     "Developer Admin";
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
 
   async function handleLogout() {
     try {
@@ -33,47 +65,62 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
+    setMobileNavOpen(false);
     router.replace("/login");
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-background">
-      <aside className="fixed left-0 top-0 z-50 flex h-full w-64 flex-col border-r border-outline-variant/20 bg-surface-container-lowest">
-        <div className="flex items-center gap-2 border-b border-outline-variant/20 p-6">
-          <BrandLogo size={24} />
-          <Link
-            href="/dashboard"
-            className="headline-sm text-on-surface tracking-tight"
+    <div className="min-h-screen overflow-x-hidden bg-background text-on-background">
+      <button
+        type="button"
+        aria-label="Close navigation"
+        className={cn(
+          "fixed inset-0 z-40 bg-black/50 transition-opacity md:hidden",
+          mobileNavOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0",
+        )}
+        onClick={() => setMobileNavOpen(false)}
+      />
+
+      <aside
+        id="app-sidebar"
+        className={cn(
+          "fixed left-0 top-0 z-50 flex h-full w-[min(16rem,85vw)] flex-col border-r border-outline-variant/20 bg-surface-container-lowest transition-transform duration-200 ease-out md:w-64 md:translate-x-0",
+          mobileNavOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-outline-variant/20 p-4 sm:p-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <BrandLogo size={24} />
+            <Link
+              href="/dashboard"
+              className="headline-sm tracking-tight text-on-surface"
+              onClick={() => setMobileNavOpen(false)}
+            >
+              Honed
+            </Link>
+          </div>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setMobileNavOpen(false)}
+            className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface md:hidden"
           >
-            Honed
-          </Link>
+            <span className="material-symbols-outlined text-[22px]">close</span>
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-4 py-6">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6">
           {nav.map((item) => {
-            const active =
-              item.label === "Home"
-                ? pathname === "/dashboard"
-                : item.label === "Roadmap"
-                  ? pathname === "/roadmap" ||
-                    pathname.startsWith("/roadmap/")
-                  : item.label === "Skill Gaps"
-                    ? pathname === "/skill-gaps" ||
-                      pathname.startsWith("/skill-gaps/")
-                  : item.label === "History"
-                  ? pathname === "/sessions" ||
-                    pathname.startsWith("/sessions/")
-                  : item.label === "Settings"
-                    ? pathname === "/settings" ||
-                      pathname.startsWith("/settings/")
-                    : pathname === item.href ||
-                      pathname.startsWith(`${item.href}/`);
+            const active = navItemActive(pathname, item);
             return (
               <Link
                 key={`${item.label}-${item.icon}`}
                 href={item.href}
+                onClick={() => setMobileNavOpen(false)}
                 className={cn(
-                  "flex items-center gap-4 rounded-lg px-4 py-2 body-sm transition-all",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 body-sm transition-all sm:gap-4 sm:px-4 sm:py-2",
                   active
                     ? "border-l-2 border-primary bg-primary-container/20 text-primary"
                     : "text-on-surface-variant hover:bg-surface-container-high",
@@ -88,8 +135,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="space-y-3 border-t border-outline-variant/20 p-6">
-          <div className="flex items-center gap-4">
+        <div className="space-y-3 border-t border-outline-variant/20 p-4 sm:p-6">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary">
               <span className="material-symbols-outlined text-[18px] text-on-primary">
                 person
@@ -113,14 +160,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div className="pl-0 md:pl-64">
-        <header className="fixed left-0 right-0 top-0 z-40 flex h-16 items-center justify-between border-b border-outline-variant/20 bg-surface/80 px-6 backdrop-blur-xl md:left-64">
-          <div className="flex items-center gap-4">
-            <span className="rounded bg-surface-container-high px-2 py-[2px] font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium tracking-[0.02em] text-on-surface-variant">
+      <div className="min-w-0 md:pl-64">
+        <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-outline-variant/20 bg-surface/80 px-3 backdrop-blur-xl sm:h-16 sm:px-6 md:left-64">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+            <button
+              type="button"
+              aria-label="Open navigation"
+              aria-expanded={mobileNavOpen}
+              aria-controls="app-sidebar"
+              onClick={() => setMobileNavOpen(true)}
+              className="rounded-lg p-2 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface md:hidden"
+            >
+              <span className="material-symbols-outlined text-[22px]">menu</span>
+            </button>
+            <span className="truncate rounded bg-surface-container-high px-2 py-[2px] font-[family-name:var(--font-jetbrains-mono)] text-[11px] font-medium tracking-[0.02em] text-on-surface-variant sm:text-[12px]">
               PRODUCTION
             </span>
           </div>
-          <div className="flex items-center gap-6">
+          <div className="flex shrink-0 items-center gap-3 sm:gap-6">
             <span className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-on-surface">
               search
             </span>
@@ -130,9 +187,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <div className="pt-16">
+        <div className="pt-14 sm:pt-16">
           <EmailVerificationBanner />
-          <main className="w-full overflow-x-hidden">{children}</main>
+          <main className="w-full min-w-0 overflow-x-hidden">{children}</main>
         </div>
       </div>
     </div>

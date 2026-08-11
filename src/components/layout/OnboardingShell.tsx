@@ -25,25 +25,25 @@ export function OnboardingShell({
   return (
     <div
       className={cn(
-        "relative flex h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden bg-background",
+        "relative flex h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col overflow-hidden bg-background sm:h-[calc(100dvh-4rem)]",
         className,
       )}
     >
       <div
         className={cn(
-          "mx-auto flex min-h-0 w-full flex-1 flex-col",
+          "mx-auto flex min-h-0 w-full min-w-0 flex-1 flex-col",
           maxWidthClassName,
         )}
       >
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5",
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5",
             contentClassName,
           )}
         >
           {children}
         </div>
-        <div className="shrink-0 border-t border-outline-variant/30 bg-background/95 px-6 py-3 backdrop-blur-md">
+        <div className="shrink-0 border-t border-outline-variant/30 bg-background/95 px-4 py-3 backdrop-blur-md sm:px-6">
           {footer}
         </div>
       </div>

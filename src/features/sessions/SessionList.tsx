@@ -90,11 +90,11 @@ export function SessionList() {
   }, []);
 
   return (
-    <div className="relative flex min-h-[calc(100vh-64px)] w-full flex-col">
-      <div className="pointer-events-none absolute right-0 top-0 h-[600px] w-[600px] rounded-full bg-gradient-to-bl from-primary/5 via-primary/5 to-transparent blur-3xl" />
+    <div className="relative flex min-h-[calc(100dvh-3.5rem)] w-full min-w-0 flex-col overflow-x-hidden sm:min-h-[calc(100vh-64px)]">
+      <div className="pointer-events-none absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-gradient-to-bl from-primary/5 via-primary/5 to-transparent blur-3xl sm:h-[600px] sm:w-[600px]" />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-10 p-6 lg:flex-row">
-        <div className="flex flex-1 flex-col gap-6">
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-col gap-8 p-4 sm:gap-10 sm:p-6 lg:flex-row">
+        <div className="flex min-w-0 flex-1 flex-col gap-6">
           <div className="mb-2 flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />

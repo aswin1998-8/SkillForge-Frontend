@@ -135,8 +135,16 @@ export function GoogleSignupButton({
 
   if (!CLIENT_ID) {
     return (
-      <p className="body-sm text-center text-error">
-        Google sign-in is not configured.
+      <p className="body-sm text-center text-on-surface-variant">
+        Google sign-in is unavailable. Set{" "}
+        <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px]">
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        </span>{" "}
+        on Vercel and matching{" "}
+        <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px]">
+          GOOGLE_CLIENT_ID
+        </span>{" "}
+        on Render.
       </p>
     );
   }

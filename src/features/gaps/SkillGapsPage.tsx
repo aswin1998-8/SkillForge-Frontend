@@ -91,7 +91,7 @@ function RadarChart({ axes }: { axes: SkillGapRadarAxis[] }) {
   });
 
   return (
-    <div className="relative flex h-[400px] w-full items-center justify-center rounded-lg bg-surface/50 p-6">
+    <div className="relative flex h-[260px] w-full min-w-0 items-center justify-center rounded-lg bg-surface/50 p-2 sm:h-[400px] sm:p-6">
       <svg className="h-full w-full max-w-[400px] overflow-visible" viewBox="0 0 400 400">
         <g className="text-outline-variant/30" fill="none" stroke="currentColor" strokeWidth="1">
           {[1, 0.75, 0.5, 0.25].map((level) => (
@@ -265,10 +265,10 @@ export function SkillGapsPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-6 py-10">
+    <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="space-y-10 lg:col-span-8">
-          <div className="group relative overflow-hidden rounded-lg bg-surface-container p-6 shadow-sm">
+        <div className="min-w-0 space-y-8 sm:space-y-10 lg:col-span-8">
+          <div className="group relative overflow-hidden rounded-lg bg-surface-container p-4 shadow-sm sm:p-6">
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
             <div className="relative z-10 mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -444,7 +444,7 @@ export function SkillGapsPage() {
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="mt-2 flex w-full items-center justify-center gap-1 rounded bg-surface-container-highest py-1.5 font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-on-surface opacity-0 transition-opacity group-hover:opacity-100">
+                        <span className="mt-2 flex w-full items-center justify-center gap-1 rounded bg-surface-container-highest py-1.5 font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-on-surface opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
                           {gap.challenge_id ? "Jump to Challenge" : "Open Roadmap"}
                           <span className="material-symbols-outlined text-[14px]">
                             arrow_forward

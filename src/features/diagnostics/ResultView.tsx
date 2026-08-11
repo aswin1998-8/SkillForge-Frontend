@@ -25,7 +25,7 @@ export function ResultView({ attempt }: { attempt: DiagnosticAttempt }) {
   const scores = attempt.skill_scores ?? {};
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 px-4 py-6 sm:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">Results</p>

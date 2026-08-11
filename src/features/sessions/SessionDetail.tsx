@@ -23,7 +23,7 @@ export function SessionDetail({ sessionId }: { sessionId: number }) {
       : null;
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-6 overflow-x-hidden px-4 py-6 sm:px-6 sm:py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">Session</p>

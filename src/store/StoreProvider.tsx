@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Provider } from "react-redux";
+import { ApiKeepAlive } from "@/components/layout/ApiKeepAlive";
 import { makeStore, setupStoreListeners, type AppStore } from "./store";
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -11,5 +12,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setupStoreListeners(storeRef.current);
   }
 
-  return <Provider store={storeRef.current}>{children}</Provider>;
+  return (
+    <Provider store={storeRef.current}>
+      <ApiKeepAlive />
+      {children}
+    </Provider>
+  );
 }

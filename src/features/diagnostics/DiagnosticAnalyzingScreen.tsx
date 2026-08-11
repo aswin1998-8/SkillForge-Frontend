@@ -79,8 +79,8 @@ export function DiagnosticAnalyzingScreen({ targetRoleLabel }: Props) {
   }, []);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-10 px-6 py-10 lg:px-10">
-      <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+    <div className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-col gap-8 px-4 py-6 sm:gap-10 sm:px-6 sm:py-10 lg:px-10">
+      <div className="flex flex-col items-center justify-center gap-2 py-6 text-center sm:py-8">
         <h1 className="display-lg tracking-tight text-on-surface">
           Analyzing your technical profile.
         </h1>
@@ -90,7 +90,7 @@ export function DiagnosticAnalyzingScreen({ targetRoleLabel }: Props) {
       </div>
 
       <div className="grid w-full grid-cols-1 gap-5 lg:grid-cols-12">
-        <div className="relative col-span-1 flex min-h-[400px] items-center justify-center overflow-hidden rounded-xl bg-surface-container-lowest p-10 shadow-lg lg:col-span-7">
+        <div className="relative col-span-1 flex min-h-[280px] items-center justify-center overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-lg sm:min-h-[400px] sm:p-10 lg:col-span-7">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
 
           <svg
@@ -208,7 +208,7 @@ export function DiagnosticAnalyzingScreen({ targetRoleLabel }: Props) {
           </div>
         </div>
 
-        <div className="col-span-1 flex flex-col gap-6 rounded-xl bg-surface-container p-6 shadow-xl lg:col-span-5 lg:p-10">
+        <div className="col-span-1 flex min-w-0 flex-col gap-6 rounded-xl bg-surface-container p-4 shadow-xl sm:p-6 lg:col-span-5 lg:p-10">
           <h2 className="headline-sm mb-2 flex items-center justify-between text-on-surface">
             Execution Log
             <span className="rounded bg-surface-container-highest px-2 py-[2px] font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant">
