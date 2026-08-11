@@ -25,11 +25,16 @@ export function AuthGate({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: user, isLoading, isError, isUninitialized, isFetching } =
+  const { data: user, isLoading, isError, isUninitialized, isSuccess } =
     useMeQuery();
 
+  // Only block the first auth check. Background refetches (e.g. after
+  // updateProfile invalidates "User") must not unmount children — that
+  // wiped onboarding step state and left users stuck on step 1.
+  const waitingForInitialAuth = isUninitialized || (isLoading && !user);
+
   useEffect(() => {
-    if (isLoading || isUninitialized || isFetching) return;
+    if (waitingForInitialAuth) return;
 
     const authed = Boolean(user) && !isError;
 
@@ -43,9 +48,7 @@ export function AuthGate({
     if (mode === "onboarding") {
       if (!authed) {
         router.replace(`/login?next=${encodeURIComponent(pathname)}`);
-        return;
       }
-      router.replace("/dashboard");
       return;
     }
 
@@ -54,16 +57,15 @@ export function AuthGate({
     }
   }, [
     user,
-    isLoading,
-    isUninitialized,
-    isFetching,
+    waitingForInitialAuth,
     isError,
+    isSuccess,
     mode,
     pathname,
     router,
   ]);
 
-  if (isLoading || isUninitialized || isFetching) {
+  if (waitingForInitialAuth) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
         Loading…
@@ -85,11 +87,14 @@ export function AuthGate({
   }
 
   if (mode === "onboarding") {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
-        Redirecting…
-      </div>
-    );
+    if (!authed) {
+      return (
+        <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
+          Redirecting…
+        </div>
+      );
+    }
+    return <>{children}</>;
   }
 
   if (!authed) {

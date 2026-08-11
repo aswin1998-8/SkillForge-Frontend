@@ -136,6 +136,11 @@ export function DashboardHome() {
 
   async function continueFromBaseline() {
     if (!canContinueBaseline) return;
+    // Advance UI first so a slow/refetching profile PATCH cannot leave the
+    // user staring at step 1 after they already submitted.
+    setFocusFrameworks(frameworks);
+    setFocusFrameworkLabels(frameworkLabels(frameworks));
+    setStep(2);
     try {
       const yearsNum = Number(years);
       await updateProfile({
@@ -146,10 +151,6 @@ export function DashboardHome() {
     } catch {
       // Demo flow: continue even if API is unavailable
     }
-    // Persist current stack early so Quick Score + diagnostic stay scoped.
-    setFocusFrameworks(frameworks);
-    setFocusFrameworkLabels(frameworkLabels(frameworks));
-    setStep(2);
   }
 
   async function continueFromGoal() {
