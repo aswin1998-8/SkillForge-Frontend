@@ -6,6 +6,16 @@ import { useMeQuery } from "@/services/api/authApi";
 
 type Mode = "auth" | "onboarding" | "dashboard";
 
+function safeNextPath(raw: string | null, fallback = "/dashboard") {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return fallback;
+  return raw;
+}
+
+function nextFromLocation() {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get("next");
+}
+
 export function AuthGate({
   mode,
   children,
@@ -15,16 +25,17 @@ export function AuthGate({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: user, isLoading, isError, isUninitialized } = useMeQuery();
+  const { data: user, isLoading, isError, isUninitialized, isFetching } =
+    useMeQuery();
 
   useEffect(() => {
-    if (isLoading || isUninitialized) return;
+    if (isLoading || isUninitialized || isFetching) return;
 
     const authed = Boolean(user) && !isError;
 
     if (mode === "auth") {
       if (authed) {
-        router.replace("/dashboard");
+        router.replace(safeNextPath(nextFromLocation()));
       }
       return;
     }
@@ -41,11 +52,20 @@ export function AuthGate({
     if (!authed) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
-  }, [user, isLoading, isUninitialized, isError, mode, pathname, router]);
+  }, [
+    user,
+    isLoading,
+    isUninitialized,
+    isFetching,
+    isError,
+    mode,
+    pathname,
+    router,
+  ]);
 
-  if (isLoading || isUninitialized) {
+  if (isLoading || isUninitialized || isFetching) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
+      <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
         Loading…
       </div>
     );
@@ -56,7 +76,7 @@ export function AuthGate({
   if (mode === "auth") {
     if (authed) {
       return (
-        <div className="flex min-h-screen items-center justify-center text-sm text-muted">
+        <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
           Redirecting…
         </div>
       );
@@ -66,7 +86,7 @@ export function AuthGate({
 
   if (mode === "onboarding") {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
+      <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
         Redirecting…
       </div>
     );
@@ -74,7 +94,7 @@ export function AuthGate({
 
   if (!authed) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted">
+      <div className="flex min-h-screen items-center justify-center text-sm text-on-surface-variant">
         Redirecting…
       </div>
     );
