@@ -339,6 +339,32 @@ export type ChallengeSubmitRequest = {
   metadata?: Record<string, unknown>;
 };
 
+export type ChallengeVisibleTestCase = {
+  id: number | string;
+  order: number;
+  is_hidden?: boolean;
+  input: string;
+  expected_output: string;
+};
+
+export type ChallengeTestResult = {
+  case_id?: number | string;
+  passed: boolean;
+  hidden?: boolean;
+  skipped?: boolean;
+  input?: string;
+  stdout?: string;
+  stderr?: string;
+  actual_output?: string;
+  expected_output?: string;
+  runtime_ms?: number;
+};
+
+export type ChallengeRunTestsResponse = {
+  passed_visible: boolean;
+  test_results: ChallengeTestResult[];
+};
+
 export type ConfidenceCreateRequest = {
   score: number;
   note?: string;

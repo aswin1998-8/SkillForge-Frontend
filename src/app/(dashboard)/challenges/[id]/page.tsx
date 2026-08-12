@@ -139,6 +139,7 @@ export default function ChallengeDetailPage({
             challenge={challenge}
             value={workspace}
             onChange={setWorkspace}
+            disabled={Boolean(challenge.is_locked)}
           />
           <SubmitForm
             challengeId={challenge.id}

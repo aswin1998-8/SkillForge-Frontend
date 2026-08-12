@@ -40,7 +40,7 @@ export function SubmitForm({
       <p className="text-sm text-muted">
         {disabled
           ? "This challenge is locked until you finish the current roadmap step."
-          : "Submit grades your work against the expected answer."}
+          : "Submit runs the full test suite (including hidden cases) or rubric checks."}
       </p>
       <div className="flex items-center gap-3">
         {error ? (

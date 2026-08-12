@@ -119,7 +119,7 @@ export function SessionResultView({ session }: { session: DiagnosticSession }) {
       <div className="flex flex-wrap gap-3">
         <Link
           href="/skill-gaps"
-          className="rounded-xl bg-primary px-6 py-3 headline-sm text-on-primary"
+          className="rounded-xl bg-primary-action px-6 py-3 headline-sm font-semibold text-white shadow-md transition-opacity hover:opacity-90"
         >
           View Skill Gap Analysis
         </Link>

@@ -3,6 +3,7 @@ import type {
   Challenge,
   ChallengeAttempt,
   ChallengeDebriefPayload,
+  ChallengeRunTestsResponse,
   ChallengeSubmitRequest,
   ConfidenceCreateRequest,
   ConfidenceRating,
@@ -35,6 +36,16 @@ export const challengeApi = baseApi.injectEndpoints({
         "Roadmap",
         "Gaps",
       ],
+    }),
+    runChallengeTests: build.mutation<
+      ChallengeRunTestsResponse,
+      { challengeId: number; code: string }
+    >({
+      query: ({ challengeId, code }) => ({
+        url: `/challenges/${challengeId}/run-tests/`,
+        method: "POST",
+        body: { code },
+      }),
     }),
     saveConfidence: build.mutation<
       ConfidenceRating,
@@ -96,6 +107,7 @@ export const {
   useGetTodayChallengeQuery,
   useGetChallengeQuery,
   useSubmitChallengeMutation,
+  useRunChallengeTestsMutation,
   useSaveConfidenceMutation,
   useGetDebriefQuery,
   useSubmitDebriefChecklistMutation,
