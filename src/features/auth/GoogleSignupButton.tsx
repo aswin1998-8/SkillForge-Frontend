@@ -127,7 +127,8 @@ export function GoogleSignupButton({
         type: "standard",
         theme: "filled_black",
         size: "large",
-        text: variantRef.current === "login" ? "continue_with" : "signup_with",
+        // signin_with avoids GIS stacking a second personalized "Continue as …" button.
+        text: variantRef.current === "login" ? "signin_with" : "signup_with",
         shape: "rectangular",
         logo_alignment: "left",
         width: buttonWidth(host),
@@ -186,19 +187,7 @@ export function GoogleSignupButton({
           isLoading ? "pointer-events-none opacity-50" : ""
         }`}
       >
-        {/* Single GIS mount — Google owns inline → iframe rendering */}
         <div ref={mountRef} className="w-full [&_>div]:!w-full" />
-
-        {isLoading ? (
-          <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 rounded-lg bg-surface-container-highest/90">
-            <span className="material-symbols-outlined animate-spin text-[18px]">
-              progress_activity
-            </span>
-            <span className="font-[family-name:var(--font-jetbrains-mono)] text-[12px] tracking-[0.02em]">
-              Connecting…
-            </span>
-          </div>
-        ) : null}
       </div>
 
       {error ? (
