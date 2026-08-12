@@ -1,22 +1,12 @@
-import Script from "next/script";
+import { GoogleAuthProvider } from "@/features/auth/GoogleAuthProvider";
 
 /**
- * Auth-route shell: preload Google Identity Services early so login/signup
- * can call renderButton without a branded placeholder race.
+ * Auth-route shell: GoogleOAuthProvider loads GIS for login/signup buttons.
  */
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Script
-        id="google-gsi"
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-      />
-      {children}
-    </>
-  );
+  return <GoogleAuthProvider>{children}</GoogleAuthProvider>;
 }
