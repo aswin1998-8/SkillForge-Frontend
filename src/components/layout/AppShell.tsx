@@ -112,8 +112,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 sm:px-4 sm:py-6">
-          {nav.map((item) => {
-            const active = navItemActive(pathname, item);
+          {[
+            ...nav,
+            ...(user?.is_staff
+              ? [{ href: "/admin-console", label: "Admin", icon: "admin_panel_settings" }]
+              : []),
+          ].map((item) => {
+            const active =
+              item.label === "Admin"
+                ? pathname === "/admin-console" || pathname.startsWith("/admin-console/")
+                : navItemActive(pathname, item as (typeof nav)[number]);
             return (
               <Link
                 key={`${item.label}-${item.icon}`}

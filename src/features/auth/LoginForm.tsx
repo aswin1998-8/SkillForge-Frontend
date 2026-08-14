@@ -127,7 +127,7 @@ export function LoginForm() {
       <div className="flex items-center justify-center gap-2">
         <span className="body-sm text-on-surface-variant">No account?</span>
         <Link
-          href="/signup"
+          href="/"
           className="headline-sm text-primary transition-colors hover:text-primary-fixed"
         >
           Request Access

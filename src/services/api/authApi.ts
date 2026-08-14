@@ -2,6 +2,7 @@ import { baseApi } from "./baseApi";
 import type {
   ForgotPasswordRequest,
   GoogleAuthRequest,
+  InvitePreview,
   LoginRequest,
   RegisterRequest,
   ResetPasswordRequest,
@@ -81,6 +82,9 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
       }),
     }),
+    previewInvite: build.query<InvitePreview, string>({
+      query: (token) => `/auth/invite/?token=${encodeURIComponent(token)}`,
+    }),
   }),
 });
 
@@ -96,4 +100,5 @@ export const {
   useMeQuery,
   useLazyMeQuery,
   useRefreshMutation,
+  usePreviewInviteQuery,
 } = authApi;

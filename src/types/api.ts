@@ -80,10 +80,16 @@ export type RegisterRequest = {
   password: string;
   first_name: string;
   last_name: string;
+  invite_token: string;
 };
 
 export type VerifyEmailRequest = {
   token: string;
+};
+
+export type InvitePreview = {
+  email: string;
+  expires_at: string;
 };
 
 export type ForgotPasswordRequest = {
@@ -102,6 +108,103 @@ export type LoginRequest = {
 
 export type GoogleAuthRequest = {
   credential: string;
+  invite_token?: string;
+};
+
+export type Paginated<T> = {
+  page: number;
+  page_size: number;
+  total: number;
+  results: T[];
+};
+
+export type StaffWaitlistRow = {
+  id: number;
+  email: string;
+  role_or_stack: string;
+  interest_note: string;
+  utm_source: string;
+  utm_medium: string;
+  utm_campaign: string;
+  invited: boolean;
+  invited_at: string | null;
+  created_at: string;
+  has_account: boolean;
+  invite_status: "none" | "pending" | "expired" | "used";
+  invite_expires_at: string | null;
+  invite_used_at: string | null;
+};
+
+export type StaffUserRow = {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  is_staff: boolean;
+  email_verified: boolean;
+  date_joined: string;
+  last_login: string | null;
+  onboarding_completed: boolean;
+  current_role: string;
+  diagnostics_completed: number;
+  challenges_completed: number;
+  open_gaps: number;
+  last_session_at: string | null;
+};
+
+export type StaffUserDetail = {
+  user: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    is_staff: boolean;
+    email_verified: boolean;
+    date_joined: string;
+    last_login: string | null;
+  };
+  profile: {
+    current_role: string;
+    years_of_experience: number | null;
+    technical_goal: string;
+    target_role: RoleBrief | null;
+    target_role_label: string;
+    known_skills: string[];
+    target_learn_skills: string[];
+    onboarding_completed: boolean;
+    diagnostic_cycle: number;
+  } | null;
+  diagnostics: Array<{
+    id: number;
+    status: string;
+    goal: string;
+    current_role: string;
+    target_role: string;
+    created_at: string;
+    completed_at: string | null;
+  }>;
+  challenge_attempts: Array<{
+    id: number;
+    status: string;
+    challenge_title: string;
+    modality: string;
+    started_at: string;
+    completed_at: string | null;
+  }>;
+  sessions: Array<{
+    id: number;
+    session_type: string;
+    title: string;
+    summary: string;
+    created_at: string;
+  }>;
+  gaps: Array<{
+    id: number;
+    skill_name: string;
+    skill_slug: string;
+    status: string;
+    updated_at: string;
+  }>;
 };
 
 export type DiagnosticQuestion = {

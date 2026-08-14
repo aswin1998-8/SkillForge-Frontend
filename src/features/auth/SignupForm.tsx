@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { BrandLogo } from "@/components/common/BrandLogo";
 import { getApiErrorMessage, getApiFieldErrors } from "@/lib/errors";
-import { useRegisterMutation } from "@/services/api/authApi";
+import {
+  usePreviewInviteQuery,
+  useRegisterMutation,
+} from "@/services/api/authApi";
 import { GoogleSignupButton } from "./GoogleSignupButton";
 
 type FieldErrors = Partial<
@@ -39,14 +42,21 @@ function validateClient(values: {
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = (searchParams.get("invite") || "").trim();
+  const {
+    data: invite,
+    isLoading: inviteLoading,
+    isError: inviteInvalid,
+  } = usePreviewInviteQuery(inviteToken, { skip: !inviteToken });
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [register, { isLoading }] = useRegisterMutation();
+  const email = invite?.email ?? "";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +77,7 @@ export function SignupForm() {
         password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        invite_token: inviteToken,
       }).unwrap();
       router.replace("/dashboard");
     } catch (err) {
@@ -85,6 +96,36 @@ export function SignupForm() {
     "h-11 w-full border-0 border-b border-outline-variant bg-transparent px-0 font-[family-name:var(--font-jetbrains-mono)] text-[13px] leading-5 text-on-surface placeholder:text-outline focus:border-primary focus:outline-none focus:ring-0";
   const labelClass =
     "font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-medium uppercase tracking-[0.02em] text-on-surface-variant";
+
+  if (!inviteToken || inviteInvalid) {
+    return (
+      <div className="relative flex w-full max-w-sm flex-col gap-6 overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container p-10 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+        <div className="mb-2 flex justify-center">
+          <BrandLogo size={48} priority />
+        </div>
+        <h1 className="display-lg text-center text-on-surface !text-[32px] !leading-[40px]">
+          Invite only
+        </h1>
+        <p className="body-sm text-center text-on-surface-variant">
+          This signup link is invite-only. Join the waitlist and we will send you
+          a link when a spot opens.
+        </p>
+        <Link
+          href="/"
+          className="mt-2 flex h-12 items-center justify-center rounded-lg font-[family-name:var(--font-geist)] text-[18px] font-semibold text-white"
+          style={{ backgroundColor: "#3B82F6" }}
+        >
+          Back to Honed
+        </Link>
+      </div>
+    );
+  }
+
+  if (inviteLoading || !invite) {
+    return (
+      <p className="body-sm text-on-surface-variant">Checking your invite…</p>
+    );
+  }
 
   return (
     <div className="relative flex w-full max-w-sm flex-col gap-6 overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container p-10 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
@@ -105,7 +146,7 @@ export function SignupForm() {
       </div>
 
       <div className="relative z-10 flex flex-col gap-4">
-        <GoogleSignupButton />
+        <GoogleSignupButton inviteToken={inviteToken} />
 
         <div className="my-1 flex items-center gap-2">
           <div className="h-px flex-grow bg-outline-variant" />
@@ -159,14 +200,13 @@ export function SignupForm() {
             <label htmlFor="email" className={labelClass}>
               Email
             </label>
-            <input
+              <input
               id="email"
               type="email"
               autoComplete="email"
-              placeholder="engineer@company.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={inputClass}
+              readOnly
+              className={`${inputClass} opacity-80`}
             />
             {fieldErrors.email ? (
               <p className="body-sm text-error">{fieldErrors.email}</p>

@@ -10,9 +10,11 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 export function GoogleSignupButton({
   variant = "signup",
+  inviteToken,
 }: {
   label?: string;
   variant?: "signup" | "login";
+  inviteToken?: string;
 }) {
   const router = useRouter();
   const [googleAuth, { error, isLoading }] = useGoogleAuthMutation();
@@ -25,7 +27,12 @@ export function GoogleSignupButton({
     }
     setGisError(null);
     try {
-      await googleAuth({ credential: response.credential }).unwrap();
+      await googleAuth({
+        credential: response.credential,
+        ...(variant === "signup" && inviteToken
+          ? { invite_token: inviteToken }
+          : {}),
+      }).unwrap();
       router.replace("/dashboard");
     } catch {
       // Mutation error state handles display

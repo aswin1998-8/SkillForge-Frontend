@@ -11,7 +11,7 @@ export default function HowThisWorksPage() {
             <span className="headline-sm text-on-surface">Honed</span>
           </Link>
           <Link
-            href="/signup"
+            href="/"
             className="rounded bg-primary px-4 py-1.5 body-sm font-semibold text-on-primary"
             style={{ color: "#002e6a", backgroundColor: "#adc6ff" }}
           >
@@ -79,7 +79,7 @@ export default function HowThisWorksPage() {
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
-            href="/signup"
+            href="/"
             className="rounded-xl px-6 py-3 body-sm font-medium text-white"
             style={{ backgroundColor: "#3B82F6" }}
           >

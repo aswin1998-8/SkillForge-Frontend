@@ -57,7 +57,9 @@ const baseQueryWithReauth: BaseQueryFn<
       url.includes("/auth/login") ||
       url.includes("/auth/register") ||
       url.includes("/auth/refresh") ||
-      url.includes("/auth/google");
+      url.includes("/auth/google") ||
+      url.includes("/auth/invite") ||
+      url.includes("/waitlist/");
 
     if (!skipRefresh) {
       const refreshed = await tryRefresh();
@@ -98,6 +100,8 @@ export const baseApi = createApi({
     "Sessions",
     "Dashboard",
     "Roadmap",
+    "StaffWaitlist",
+    "StaffUsers",
   ],
   endpoints: () => ({}),
 });
