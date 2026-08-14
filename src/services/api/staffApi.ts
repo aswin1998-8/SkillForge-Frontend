@@ -38,6 +38,13 @@ export const staffApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["StaffWaitlist"],
     }),
+    deleteWaitlistSignup: build.mutation<{ id: number; email: string }, number>({
+      query: (id) => ({
+        url: `/staff/waitlist/${id}/`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["StaffWaitlist"],
+    }),
     staffUsers: build.query<
       Paginated<StaffUserRow>,
       { page?: number; q?: string } | void
@@ -68,6 +75,7 @@ export const staffApi = baseApi.injectEndpoints({
 export const {
   useStaffWaitlistQuery,
   useSendWaitlistInviteMutation,
+  useDeleteWaitlistSignupMutation,
   useStaffUsersQuery,
   useStaffUserDetailQuery,
   useDeleteStaffUserMutation,

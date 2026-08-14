@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { getApiErrorMessage } from "@/lib/errors";
 import {
+  useDeleteWaitlistSignupMutation,
   useSendWaitlistInviteMutation,
   useStaffWaitlistQuery,
 } from "@/services/api/staffApi";
@@ -20,7 +21,9 @@ export function AdminWaitlistPage() {
     q: submittedQ || undefined,
   });
   const [sendInvite, { isLoading: sending }] = useSendWaitlistInviteMutation();
+  const [deleteSignup, { isLoading: deleting }] = useDeleteWaitlistSignupMutation();
   const [pendingId, setPendingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const rows = data?.results ?? [];
@@ -45,6 +48,25 @@ export function AdminWaitlistPage() {
       setActionError(getApiErrorMessage(err, "Could not send invite."));
     } finally {
       setPendingId(null);
+    }
+  }
+
+  async function onDelete(id: number, email: string) {
+    if (
+      !window.confirm(
+        `Delete waitlist signup for ${email}? Unused invite links for this row will stop working. Existing accounts are not deleted.`,
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    setDeletingId(id);
+    try {
+      await deleteSignup(id).unwrap();
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, "Could not delete waitlist signup."));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -102,12 +124,13 @@ export function AdminWaitlistPage() {
               <th className="px-3 py-2 font-medium">Joined</th>
               <th className="px-3 py-2 font-medium">Invite</th>
               <th className="px-3 py-2 font-medium">Account</th>
-              <th className="px-3 py-2 font-medium" />
+              <th className="px-3 py-2 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => {
               const busy = sending && pendingId === row.id;
+              const removing = deleting && deletingId === row.id;
               const disableInvite = row.has_account || row.invite_status === "used";
               return (
                 <tr key={row.id} className="border-t border-outline-variant/15">
@@ -131,14 +154,24 @@ export function AdminWaitlistPage() {
                     {row.has_account ? "Yes" : "No"}
                   </td>
                   <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      disabled={disableInvite || busy}
-                      onClick={() => onInvite(row.id)}
-                      className="rounded-lg border border-outline-variant/40 px-3 py-1.5 body-sm text-on-surface disabled:opacity-40"
-                    >
-                      {busy ? "Sending…" : inviteLabel(row.invite_status, row.has_account)}
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={disableInvite || busy || removing}
+                        onClick={() => onInvite(row.id)}
+                        className="rounded-lg border border-outline-variant/40 px-3 py-1.5 body-sm text-on-surface disabled:opacity-40"
+                      >
+                        {busy ? "Sending…" : inviteLabel(row.invite_status, row.has_account)}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={removing}
+                        onClick={() => onDelete(row.id, row.email)}
+                        className="rounded-lg border border-error/40 px-3 py-1.5 body-sm text-error disabled:opacity-40"
+                      >
+                        {removing ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
