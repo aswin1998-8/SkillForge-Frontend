@@ -284,11 +284,10 @@ export function DashboardHome() {
             type="button"
             onClick={continueFromBaseline}
             disabled={isLoading || !canContinueBaseline}
-            className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 headline-sm text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-60 sm:px-6 sm:py-3"
-            style={{ backgroundColor: "rgb(59, 130, 246)" }}
+            className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-primary shadow-sm transition-colors disabled:opacity-50"
           >
             {isLoading ? "Saving…" : "Continue"}
-            <span className="material-symbols-outlined text-[20px]">
+            <span className="material-symbols-outlined text-[16px]">
               arrow_forward
             </span>
           </button>

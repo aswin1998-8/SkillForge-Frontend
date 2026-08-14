@@ -70,14 +70,14 @@ export function OnboardingObjectiveStep({
             disabled={!selected || isLoading}
             onClick={onContinue}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-6 py-2.5 headline-sm transition-all",
+              "flex items-center gap-1 rounded-md px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] shadow-sm transition-colors",
               selected
-                ? "bg-primary text-on-primary shadow-md hover:bg-primary-container hover:text-on-primary-container"
+                ? "bg-primary text-on-primary"
                 : "cursor-not-allowed bg-surface-container-highest text-on-surface-variant opacity-50",
             )}
           >
             {isLoading ? "Saving…" : "Continue"}
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined text-[16px]">
               arrow_forward
             </span>
           </button>

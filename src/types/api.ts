@@ -416,6 +416,7 @@ export type LearningSession = {
   title: string;
   summary: string;
   created_at: string;
+  score: number | null;
 };
 
 export type DashboardData = {

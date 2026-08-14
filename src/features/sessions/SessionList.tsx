@@ -13,7 +13,7 @@ type HistoryEntry = {
   isToday: boolean;
   title: string;
   focus: string;
-  score: string | null;
+  score: number | null;
 };
 
 const VISUAL_CARD_BG =
@@ -62,7 +62,7 @@ function toEntry(session: LearningSession): HistoryEntry {
     isToday,
     title: session.title,
     focus: focusFromSession(session),
-    score: null,
+    score: typeof session.score === "number" ? session.score : null,
   };
 }
 
@@ -75,14 +75,17 @@ export function SessionList() {
   }, [data]);
 
   const avgScore = useMemo(() => {
-    const scored = entries.filter((e) => e.score);
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const scored = entries.filter((e) => {
+      if (e.score == null) return false;
+      const session = data?.find((s) => String(s.id) === e.id);
+      if (!session) return true;
+      return new Date(session.created_at).getTime() >= cutoff;
+    });
     if (!scored.length) return "—";
-    const sum = scored.reduce(
-      (acc, e) => acc + Number.parseFloat(e.score ?? "0"),
-      0,
-    );
+    const sum = scored.reduce((acc, e) => acc + (e.score ?? 0), 0);
     return `${(sum / scored.length).toFixed(1)}%`;
-  }, [entries]);
+  }, [data, entries]);
 
   const lastSync = useMemo(() => {
     const now = new Date();
@@ -155,7 +158,7 @@ export function SessionList() {
                         SCORE
                       </span>
                       <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] leading-5 text-primary">
-                        {entry.score ?? "—"}
+                        {entry.score != null ? `${Math.round(entry.score)}%` : "—"}
                       </span>
                     </div>
                     <span className="material-symbols-outlined translate-x-0 text-on-surface-variant transition-all group-hover:translate-x-1 group-hover:text-primary">

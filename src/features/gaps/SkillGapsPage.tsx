@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useGetGapAnalysisQuery } from "@/services/api/gapApi";
 import { useGetRoadmapQuery } from "@/services/api/progressApi";
 import type {
+  SkillGapAnalysisData,
   SkillGapRadarAxis,
   UserSkillGap,
 } from "@/types/api";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
 
 type SeverityFilter = "all" | "high" | "medium" | "low";
 type StatusFilter = "all" | "NOT_STARTED" | "IN_PROGRESS";
@@ -31,6 +33,64 @@ function progressFor(gap: UserSkillGap) {
   if (s === "CLOSED") return 100;
   if (s === "IN_PROGRESS") return 45;
   return 0;
+}
+
+function gapExportRows(gaps: UserSkillGap[]) {
+  return gaps.map((gap) => ({
+    Skill: gap.skill?.name ?? "",
+    Status: gap.status ?? "",
+    Severity: gap.severity ?? "",
+    Fragment: gap.fragment ?? "",
+    "Progress %": progressFor(gap),
+    "Market insight": gap.market_insight ?? "",
+  }));
+}
+
+function exportExcel(data: SkillGapAnalysisData) {
+  const wb = XLSX.utils.book_new();
+  const summary = data.summary;
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet([
+      {
+        "Open count": summary.open_count,
+        "In progress count": summary.in_progress_count,
+        "Closed count": summary.closed_count,
+        "Severity high": summary.by_severity.high,
+        "Severity medium": summary.by_severity.medium,
+        "Severity low": summary.by_severity.low,
+        "Severity unknown": summary.by_severity.unknown,
+        "Avg proficiency": summary.avg_proficiency ?? "",
+        "Active focus": summary.active_focus ?? "",
+      },
+    ]),
+    "Summary",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(gapExportRows(data.open_gaps || [])),
+    "Open gaps",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(gapExportRows(data.recently_closed_gaps || [])),
+    "Closed gaps",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      (data.radar?.axes || []).map((axis) => ({
+        Axis: axis.label,
+        Current: axis.current,
+        Target: axis.target,
+      })),
+    ),
+    "Radar",
+  );
+  XLSX.writeFile(
+    wb,
+    `skill-gap-analysis-${new Date().toISOString().slice(0, 10)}.xlsx`,
+  );
 }
 
 function severityChip(severity?: string | null) {
@@ -251,17 +311,9 @@ export function SkillGapsPage() {
   const avgProficiency = summary?.avg_proficiency ?? 0;
   const activeFocus = summary?.active_focus ?? filteredGaps.length;
 
-  function exportJson() {
+  function exportReport() {
     if (!data) return;
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `skill-gap-analysis-${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    exportExcel(data);
   }
 
   return (
@@ -289,7 +341,7 @@ export function SkillGapsPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={exportJson}
+                  onClick={exportReport}
                   disabled={!data}
                   className="flex items-center gap-1 rounded-md bg-primary px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-primary shadow-sm transition-colors disabled:opacity-50"
                 >

@@ -177,14 +177,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               PRODUCTION
             </span>
           </div>
-          <div className="flex shrink-0 items-center gap-3 sm:gap-6">
-            <span className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-on-surface">
-              search
-            </span>
-            <span className="material-symbols-outlined cursor-pointer text-on-surface-variant hover:text-on-surface">
-              notifications
-            </span>
-          </div>
         </header>
 
         <div className="pt-14 sm:pt-16">

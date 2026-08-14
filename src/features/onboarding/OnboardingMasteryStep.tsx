@@ -105,9 +105,12 @@ export function OnboardingMasteryStep({
             type="button"
             disabled={!canContinue}
             onClick={onContinue}
-            className="rounded-xl bg-primary px-6 py-2.5 headline-sm text-on-primary disabled:opacity-50"
+            className="flex items-center gap-1 rounded-md bg-primary px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-primary shadow-sm transition-colors disabled:opacity-50"
           >
             {isLoading ? "Saving…" : "Continue"}
+            <span className="material-symbols-outlined text-[16px]">
+              arrow_forward
+            </span>
           </button>
         </div>
       }

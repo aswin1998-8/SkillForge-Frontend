@@ -216,7 +216,7 @@ export function RoadmapCurrentJobView() {
                   </p>
                   <Link
                     href="/diagnostic"
-                    className="mt-4 inline-flex rounded-lg bg-primary px-4 py-2 body-sm text-on-primary"
+                    className="mt-4 inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-primary shadow-sm transition-colors"
                   >
                     Start diagnostic
                   </Link>
@@ -314,7 +314,7 @@ export function RoadmapCurrentJobView() {
               {activeStep ? (
                 <Link
                   href={stepHref(activeStep, fallbackChallenge)}
-                  className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg border border-outline-variant/40 px-4 py-2 body-sm text-primary hover:border-primary/50"
+                  className="mt-2 inline-flex w-fit items-center gap-2 rounded-lg bg-primary px-4 py-2 body-sm text-on-primary"
                 >
                   Open current challenge
                   <span className="material-symbols-outlined text-sm">
