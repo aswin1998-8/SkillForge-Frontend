@@ -1,8 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/errors";
-import { useStaffUserDetailQuery } from "@/services/api/staffApi";
+import { useMeQuery } from "@/services/api/authApi";
+import {
+  useDeleteStaffUserMutation,
+  useStaffUserDetailQuery,
+} from "@/services/api/staffApi";
 import { AdminConsoleTabs } from "./AdminConsoleTabs";
 
 function formatDate(value: string | null) {
@@ -11,7 +17,30 @@ function formatDate(value: string | null) {
 }
 
 export function AdminUserDetailPage({ userId }: { userId: number }) {
+  const router = useRouter();
+  const { data: me } = useMeQuery();
   const { data, isLoading, error } = useStaffUserDetailQuery(userId);
+  const [deleteUser, { isLoading: deleting }] = useDeleteStaffUserMutation();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const isSelf = data?.user.id === me?.id;
+
+  async function onDelete() {
+    if (!data) return;
+    if (
+      !window.confirm(
+        `Delete ${data.user.email}? This removes their account and all progress. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    try {
+      await deleteUser(data.user.id).unwrap();
+      router.replace("/admin-console/users");
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, "Could not delete user."));
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10 md:px-10">
@@ -37,10 +66,16 @@ export function AdminUserDetailPage({ userId }: { userId: number }) {
         </p>
       ) : null}
 
+      {actionError ? (
+        <p className="body-sm text-error">{actionError}</p>
+      ) : null}
+
       {data ? (
         <>
           <section className="rounded-xl border border-outline-variant/20 p-4">
-            <h2 className="headline-sm text-on-surface">{data.user.email}</h2>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="headline-sm text-on-surface">{data.user.email}</h2>
             <p className="mt-1 body-sm text-on-surface-variant">
               {[data.user.first_name, data.user.last_name].filter(Boolean).join(" ") ||
                 "No name"}
@@ -64,6 +99,18 @@ export function AdminUserDetailPage({ userId }: { userId: number }) {
                 <p>Goal: {data.profile.technical_goal || "—"}</p>
               </div>
             ) : null}
+              </div>
+              {isSelf ? null : (
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={onDelete}
+                  className="rounded-lg border border-error/40 px-3 py-1.5 body-sm text-error disabled:opacity-40"
+                >
+                  {deleting ? "Deleting…" : "Delete user"}
+                </button>
+              )}
+            </div>
           </section>
 
           <ActivityTable

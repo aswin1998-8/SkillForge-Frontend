@@ -55,6 +55,13 @@ export const staffApi = baseApi.injectEndpoints({
       query: (id) => `/staff/users/${id}/`,
       providesTags: ["StaffUsers"],
     }),
+    deleteStaffUser: build.mutation<{ id: number; email: string }, number>({
+      query: (id) => ({
+        url: `/staff/users/${id}/`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["StaffUsers", "StaffWaitlist"],
+    }),
   }),
 });
 
@@ -63,4 +70,5 @@ export const {
   useSendWaitlistInviteMutation,
   useStaffUsersQuery,
   useStaffUserDetailQuery,
+  useDeleteStaffUserMutation,
 } = staffApi;

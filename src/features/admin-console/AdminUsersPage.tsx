@@ -3,7 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/errors";
-import { useStaffUsersQuery } from "@/services/api/staffApi";
+import { useMeQuery } from "@/services/api/authApi";
+import {
+  useDeleteStaffUserMutation,
+  useStaffUsersQuery,
+} from "@/services/api/staffApi";
 import { AdminConsoleTabs } from "./AdminConsoleTabs";
 
 function formatDate(value: string | null) {
@@ -14,11 +18,34 @@ function formatDate(value: string | null) {
 export function AdminUsersPage() {
   const [q, setQ] = useState("");
   const [submittedQ, setSubmittedQ] = useState("");
+  const { data: me } = useMeQuery();
   const { data, isLoading, isFetching, error } = useStaffUsersQuery({
     q: submittedQ || undefined,
   });
+  const [deleteUser, { isLoading: deleting }] = useDeleteStaffUserMutation();
+  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const rows = data?.results ?? [];
   const total = data?.total ?? 0;
+
+  async function onDelete(id: number, email: string) {
+    if (
+      !window.confirm(
+        `Delete ${email}? This removes their account and all progress. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    setPendingId(id);
+    try {
+      await deleteUser(id).unwrap();
+    } catch (err) {
+      setActionError(getApiErrorMessage(err, "Could not delete user."));
+    } finally {
+      setPendingId(null);
+    }
+  }
 
   return (
     <div className="mx-auto flex w-full flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10 md:px-10">
@@ -51,6 +78,9 @@ export function AdminUsersPage() {
         </button>
       </form>
 
+      {actionError ? (
+        <p className="body-sm text-error">{actionError}</p>
+      ) : null}
       {error ? (
         <p className="body-sm text-error">
           {getApiErrorMessage(error, "Could not load users.")}
@@ -73,6 +103,7 @@ export function AdminUsersPage() {
               <th className="px-3 py-2 font-medium">Challenges</th>
               <th className="px-3 py-2 font-medium">Open gaps</th>
               <th className="px-3 py-2 font-medium">Last session</th>
+              <th className="px-3 py-2 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -105,12 +136,26 @@ export function AdminUsersPage() {
                 <td className="whitespace-nowrap px-3 py-2 body-sm text-on-surface-variant">
                   {formatDate(row.last_session_at)}
                 </td>
+                <td className="px-3 py-2">
+                  {row.id === me?.id ? (
+                    <span className="body-sm text-on-surface-variant">You</span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={deleting && pendingId === row.id}
+                      onClick={() => onDelete(row.id, row.email)}
+                      className="rounded-lg border border-error/40 px-3 py-1.5 body-sm text-error disabled:opacity-40"
+                    >
+                      {deleting && pendingId === row.id ? "Deleting…" : "Delete"}
+                    </button>
+                  )}
+                </td>
               </tr>
             ))}
             {!isLoading && rows.length === 0 ? (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={9}
                   className="px-3 py-8 text-center body-sm text-on-surface-variant"
                 >
                   No users match.
