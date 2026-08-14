@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BrandLogo } from "@/components/common/BrandLogo";
-import { EmailVerificationBanner } from "@/components/layout/EmailVerificationBanner";
 import { useLogoutMutation, useMeQuery } from "@/services/api/authApi";
 import { cn } from "@/lib/utils";
 
@@ -188,7 +187,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <div className="pt-14 sm:pt-16">
-          <EmailVerificationBanner />
           <main className="w-full min-w-0 overflow-x-hidden">{children}</main>
         </div>
       </div>
