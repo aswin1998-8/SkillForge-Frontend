@@ -123,7 +123,11 @@ export function SessionStageForm({
     } else {
       setAnswers(textMap);
       setChoices(choiceMap);
-      setIndex(0);
+      const firstUnanswered = questions.findIndex((q) => {
+        if (q.modality === "foundational") return q.answer?.choice_id == null;
+        return !(q.answer?.answer_text || "").trim();
+      });
+      setIndex(firstUnanswered >= 0 ? firstUnanswered : 0);
     }
     setTestResults([]);
     setHydrated(true);
@@ -165,18 +169,39 @@ export function SessionStageForm({
     setTestResults(result.test_results || []);
   }
 
-  async function submitCurrent() {
-    if (!question || !canProceed) return;
+  const isLast = index >= questions.length - 1;
+
+  function questionReady(q: SessionQuestion) {
+    if (!q) return false;
+    if (q.modality === "foundational") return choices[q.id] != null;
+    return (answers[q.id] || "").trim().length > 0;
+  }
+
+  function goNext() {
+    if (!question || !canProceed || isLast) return;
+    setIndex((i) => Math.min(i + 1, questions.length - 1));
+    setTestResults([]);
+  }
+
+  function goBack() {
+    setIndex((i) => Math.max(i - 1, 0));
+    setTestResults([]);
+  }
+
+  async function submitStage() {
+    const incomplete = questions.findIndex((q) => !questionReady(q));
+    if (incomplete >= 0) {
+      setIndex(incomplete);
+      return;
+    }
     const body = {
-      answers: [
-        {
-          question_id: question.id,
-          answer_text: answers[question.id] || "",
-          ...(question.modality === "foundational" && choices[question.id]
-            ? { choice_id: choices[question.id]! }
-            : {}),
-        },
-      ],
+      answers: questions.map((q) => ({
+        question_id: q.id,
+        answer_text: answers[q.id] || "",
+        ...(q.modality === "foundational" && choices[q.id]
+          ? { choice_id: choices[q.id]! }
+          : {}),
+      })),
     };
     const next = await submit({ sessionId: session.id, body }).unwrap();
     clearDraft(session.id, session.current_stage);
@@ -204,6 +229,8 @@ export function SessionStageForm({
           </h1>
         </div>
         <span className="rounded bg-surface-container-high px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant">
+          {index + 1} / {questions.length}
+          <span className="mx-1 text-outline">·</span>
           {askedSoFar} / {budget}
         </span>
       </div>
@@ -310,15 +337,34 @@ export function SessionStageForm({
 
       {/* Sticky actions so Next is always reachable on coding steps */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-outline-variant/30 bg-background/95 px-4 py-3 backdrop-blur-md md:left-64">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-end gap-3">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
           <button
             type="button"
-            disabled={isLoading || !canProceed}
-            onClick={() => void submitCurrent()}
-            className="rounded-xl bg-primary px-6 py-2.5 headline-sm text-on-primary disabled:opacity-60"
+            disabled={index === 0 || isLoading}
+            onClick={goBack}
+            className="rounded-xl border border-outline-variant/40 px-5 py-2.5 body-sm text-on-surface disabled:opacity-40"
           >
-            {isLoading ? "Submitting…" : "Submit answer"}
+            Back
           </button>
+          {isLast ? (
+            <button
+              type="button"
+              disabled={isLoading || !canProceed}
+              onClick={() => void submitStage()}
+              className="rounded-xl bg-primary px-6 py-2.5 headline-sm text-on-primary disabled:opacity-60"
+            >
+              {isLoading ? "Submitting…" : "Submit stage"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!canProceed || isLoading}
+              onClick={goNext}
+              className="rounded-xl bg-primary px-6 py-2.5 headline-sm text-on-primary disabled:opacity-60"
+            >
+              Next
+            </button>
+          )}
         </div>
       </div>
     </div>
