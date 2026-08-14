@@ -144,7 +144,12 @@ export default function ChallengeDetailPage({
           <SubmitForm
             challengeId={challenge.id}
             payload={workspace}
-            disabled={Boolean(challenge.is_locked)}
+            disabled={
+              Boolean(challenge.is_locked) ||
+              (challenge.modality === "WAR_ROOM" &&
+                !(workspace.metadata?.war_room as { complete?: boolean } | undefined)
+                  ?.complete)
+            }
             onSubmitted={(attempt) => {
               router.push(
                 `/challenges/${challenge.id}/submit?attempt=${attempt.id}`,

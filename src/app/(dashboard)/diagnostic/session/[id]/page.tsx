@@ -116,6 +116,7 @@ export default function DiagnosticSessionPage({
       questions={stageQuestions}
       onUpdated={setLocal}
       onStageSubmitted={(next) => {
+        if (next.status !== "COMPLETED") return;
         setTransitionLabel(session.current_stage || "your answers");
         setPendingSession(next);
         setTransitioning(true);

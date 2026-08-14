@@ -15,6 +15,12 @@ import type {
   ChallengeVisibleTestCase,
 } from "@/types/api";
 import { useRunChallengeTestsMutation } from "@/services/api/challengeApi";
+import {
+  AuditAiPrWorkspace,
+  ExplainAiDiffWorkspace,
+  InheritedCodebaseWorkspace,
+  WarRoomWorkspace,
+} from "./experienceWorkspaces";
 
 const MonacoEditor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
@@ -369,6 +375,50 @@ export function ChallengeWorkspace({
   if (modality === "CODING") {
     return (
       <CodingWorkspace
+        challenge={challenge}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (modality === "AUDIT_AI_PR") {
+    return (
+      <AuditAiPrWorkspace
+        challenge={challenge}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (modality === "EXPLAIN_AI_DIFF") {
+    return (
+      <ExplainAiDiffWorkspace
+        challenge={challenge}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (modality === "INHERITED_CODEBASE") {
+    return (
+      <InheritedCodebaseWorkspace
+        challenge={challenge}
+        value={value}
+        onChange={onChange}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (modality === "WAR_ROOM") {
+    return (
+      <WarRoomWorkspace
         challenge={challenge}
         value={value}
         onChange={onChange}

@@ -260,7 +260,11 @@ export type ChallengeModality =
   | "ARCHITECT"
   | "EXPLAIN_CODE"
   | "USE_AI"
-  | "COMMUNICATE";
+  | "COMMUNICATE"
+  | "AUDIT_AI_PR"
+  | "EXPLAIN_AI_DIFF"
+  | "INHERITED_CODEBASE"
+  | "WAR_ROOM";
 
 export type ChallengeSkill = {
   id: number;
@@ -614,6 +618,8 @@ export type DiagnosticSession = {
   difficulty_bump?: number;
   questions: SessionQuestion[];
   current_questions: SessionQuestion[];
+  skipped_easy_areas?: string[];
+  question_budget?: number;
   roadmap_items: Array<{
     id: number;
     challenge_modality: string;

@@ -39,12 +39,40 @@ export const challengeApi = baseApi.injectEndpoints({
     }),
     runChallengeTests: build.mutation<
       ChallengeRunTestsResponse,
-      { challengeId: number; code: string }
+      { challengeId: number; code: string; files?: Record<string, string> }
     >({
-      query: ({ challengeId, code }) => ({
+      query: ({ challengeId, code, files }) => ({
         url: `/challenges/${challengeId}/run-tests/`,
         method: "POST",
-        body: { code },
+        body: { code, ...(files ? { files } : {}) },
+      }),
+    }),
+    getWarRoomState: build.query<
+      {
+        attempt_id: number | null;
+        current_index: number;
+        complete: boolean;
+        beats: Array<Record<string, unknown>>;
+        answers: Record<string, string>;
+      },
+      number
+    >({
+      query: (challengeId) => `/challenges/${challengeId}/beats/`,
+    }),
+    advanceWarRoomBeat: build.mutation<
+      {
+        attempt_id: number;
+        current_index: number;
+        complete: boolean;
+        beats: Array<Record<string, unknown>>;
+        answers: Record<string, string>;
+      },
+      { challengeId: number; beat_id: string; text: string }
+    >({
+      query: ({ challengeId, beat_id, text }) => ({
+        url: `/challenges/${challengeId}/beats/`,
+        method: "POST",
+        body: { beat_id, text },
       }),
     }),
     saveConfidence: build.mutation<
@@ -108,6 +136,8 @@ export const {
   useGetChallengeQuery,
   useSubmitChallengeMutation,
   useRunChallengeTestsMutation,
+  useGetWarRoomStateQuery,
+  useAdvanceWarRoomBeatMutation,
   useSaveConfidenceMutation,
   useGetDebriefQuery,
   useSubmitDebriefChecklistMutation,

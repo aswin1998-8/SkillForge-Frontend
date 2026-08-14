@@ -137,26 +137,19 @@ export function SessionStageForm({
   }, [answers, choices, index, hydrated, session.id, session.current_stage]);
 
   const question = questions[index];
-  const total = questions.length || 1;
   const modality = question?.modality || "foundational";
   const isOpenEnded = OPEN_ENDED.has(modality);
   const isCoding = modality === "coding" || modality === "find_issues";
   const isFoundational = modality === "foundational";
-  const isLast = index >= total - 1;
+  const askedSoFar = session.questions?.length || 1;
+  const budget = session.question_budget || 15;
+  const skippedAreas = session.skipped_easy_areas || [];
 
   const canProceed = useMemo(() => {
     if (!question) return false;
     if (isFoundational) return choices[question.id] != null;
     return (answers[question.id] || "").trim().length > 0;
   }, [question, isFoundational, choices, answers]);
-
-  const stageReady = useMemo(() => {
-    return questions.every((q) => {
-      const mod = q.modality || "foundational";
-      if (mod === "foundational") return choices[q.id] != null;
-      return (answers[q.id] || "").trim().length > 0;
-    });
-  }, [questions, answers, choices]);
 
   function setAnswerText(qid: number, value: string) {
     setAnswers((prev) => ({ ...prev, [qid]: value }));
@@ -172,31 +165,25 @@ export function SessionStageForm({
     setTestResults(result.test_results || []);
   }
 
-  async function submitStage() {
-    if (!stageReady) return;
+  async function submitCurrent() {
+    if (!question || !canProceed) return;
     const body = {
-      answers: questions.map((q) => ({
-        question_id: q.id,
-        answer_text: answers[q.id] || "",
-        ...(q.modality === "foundational" && choices[q.id]
-          ? { choice_id: choices[q.id]! }
-          : {}),
-      })),
+      answers: [
+        {
+          question_id: question.id,
+          answer_text: answers[question.id] || "",
+          ...(question.modality === "foundational" && choices[question.id]
+            ? { choice_id: choices[question.id]! }
+            : {}),
+        },
+      ],
     };
     const next = await submit({ sessionId: session.id, body }).unwrap();
     clearDraft(session.id, session.current_stage);
     onUpdated(next);
-    onStageSubmitted?.(next);
-  }
-
-  async function handlePrimary() {
-    if (!question) return;
-    if (!isLast) {
-      setIndex((i) => Math.min(total - 1, i + 1));
-      setTestResults([]);
-      return;
+    if (next.status === "COMPLETED") {
+      onStageSubmitted?.(next);
     }
-    await submitStage();
   }
 
   if (!question) {
@@ -217,9 +204,17 @@ export function SessionStageForm({
           </h1>
         </div>
         <span className="rounded bg-surface-container-high px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-[12px] text-on-surface-variant">
-          {index + 1} / {total}
+          {askedSoFar} / {budget}
         </span>
       </div>
+
+      {skippedAreas.length ? (
+        <div className="rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 body-sm text-on-surface">
+          Skipping easier items in{" "}
+          {skippedAreas.map((a) => a.replaceAll("_", " ")).join(", ")} — moving
+          to a harder check.
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-outline-variant/40 bg-surface-container p-4 sm:p-6">
         {question.competency_area ? (
@@ -315,29 +310,14 @@ export function SessionStageForm({
 
       {/* Sticky actions so Next is always reachable on coding steps */}
       <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-outline-variant/30 bg-background/95 px-4 py-3 backdrop-blur-md md:left-64">
-        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-end gap-3">
           <button
             type="button"
-            disabled={index === 0}
-            onClick={() => {
-              setIndex((i) => Math.max(0, i - 1));
-              setTestResults([]);
-            }}
-            className="rounded-lg border border-outline-variant/40 px-4 py-2.5 body-sm disabled:opacity-40"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            disabled={isLoading || !canProceed || (isLast && !stageReady)}
-            onClick={() => void handlePrimary()}
+            disabled={isLoading || !canProceed}
+            onClick={() => void submitCurrent()}
             className="rounded-xl bg-primary px-6 py-2.5 headline-sm text-on-primary disabled:opacity-60"
           >
-            {isLoading
-              ? "Submitting stage…"
-              : isLast
-                ? "Submit stage"
-                : "Next"}
+            {isLoading ? "Submitting…" : "Submit answer"}
           </button>
         </div>
       </div>
